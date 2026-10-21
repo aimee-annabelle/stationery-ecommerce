@@ -1,0 +1,65 @@
+# Local development: Postgres, the FastAPI API, the Vite frontend and Mailpit (a local inbox).
+#   docker compose up --build
+#   API docs: http://localhost:8000/docs   Shop: http://localhost:5173   Emails: http://localhost:8025
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pahyems
+      POSTGRES_PASSWORD: pahyems
+      POSTGRES_DB: pahyems
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./backend/docker/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pahyems -d pahyems"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://pahyems:pahyems@db:5432/pahyems
+      TEST_DATABASE_URL: postgresql+psycopg://pahyems:pahyems@db:5432/pahyems_test
+      NOTIFIER: smtp
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  web:
+    build: ./frontend
+    environment:
+      API_PROXY_TARGET: http://api:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - web-node-modules:/app/node_modules
+    depends_on:
+      - api
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  db-data:
+  web-node-modules:

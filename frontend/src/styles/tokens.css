@@ -1,0 +1,64 @@
+/* Design tokens for option D, "Paper Studio Editorial" (HANDOFF.md, "Design tokens"). */
+:root {
+  --ink: #22302a;
+  --paper: #f7f5f0;
+  --paper-staff: #f2efe8;
+  --white: #ffffff;
+  --muted: #55625a;
+
+  --sage: #dce8df;
+  --butter: #f7e7b4;
+  --lilac: #e4ddf3;
+  --blush: #f6dcd3;
+  --terracotta: #c0573e;
+  --error: #a8462f;
+
+  /* Category tints */
+  --tint-school: var(--butter);
+  --tint-office: var(--lilac);
+  --tint-electronics: var(--blush);
+  --tint-phone: var(--sage);
+
+  --font-heading: "Playfair Display", Georgia, serif;
+  --font-body: Inter, system-ui, sans-serif;
+
+  --radius-pill: 999px;
+  --radius-card-sm: 20px;
+  --radius-card: 30px;
+  --radius-card-lg: 40px;
+
+  --touch-target: 44px;
+  --page-gutter: 16px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
+
+.staff-area {
+  background: var(--paper-staff);
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px var(--page-gutter);
+}

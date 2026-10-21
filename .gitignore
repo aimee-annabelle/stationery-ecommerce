@@ -1,0 +1,22 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+backend/uploads/
+
+# Node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Development
+CLAUDE.md
+HANDOFF.md
+design/
+image.png
