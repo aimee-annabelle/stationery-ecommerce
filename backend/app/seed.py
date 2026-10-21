@@ -78,7 +78,6 @@ SETTINGS: dict[str, object] = {
     "orders": {
         "allow_guest_checkout": True,
         "whatsapp_ready_button": True,
-        "workers_record_walk_ins": True,
         "pickup_hold_days": 3,
     },
     "message_templates": {
@@ -89,6 +88,9 @@ SETTINGS: dict[str, object] = {
         "payment_rejected": "We couldn't confirm payment for {order}. [PAYMENT REJECTED MESSAGE]",
         "print_quote": "Your quote for {details} is {total} RWF. [PRINT QUOTE MESSAGE]",
         "print_ready": "[PRINT REQUEST READY MESSAGE]",
+        # From design/AdminOrders.dc.html.
+        "general": "Hello {name}, this is Pahyems about your order {order}.",
+        "receipt": "Pahyems receipt {order}\n{items}\nTotal {total}\n{footer}",
     },
     "receipt": {
         "footer": "Thank you for shopping with us!",

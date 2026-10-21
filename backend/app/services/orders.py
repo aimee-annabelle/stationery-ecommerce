@@ -50,9 +50,12 @@ def _merge(requests: list[LineRequest]) -> list[LineRequest]:
     return [LineRequest(p, v, min(q, MAX_LINE_QTY)) for (p, v), q in totals.items()]
 
 
-def price_lines(db: Session, requests: list[LineRequest], *, lock: bool = False) -> list[PricedLine]:
+def price_lines(
+    db: Session, requests: list[LineRequest], *, lock: bool = False, allow_hidden: bool = False
+) -> list[PricedLine]:
     """Prices each line and notes anything that stops it being ordered. With lock=True the products are
-    locked until the transaction ends, so stock can't change between this check and the order."""
+    locked until the transaction ends, so stock can't change between this check and the order.
+    allow_hidden is for walk-in sales: a product hidden from the online shop can still be sold at the counter."""
     requests = _merge(requests)
     ids = sorted({r.product_id for r in requests})
     query = select(Product).where(Product.id.in_(ids)).order_by(Product.id)  # fixed order avoids deadlocks
@@ -67,7 +70,7 @@ def price_lines(db: Session, requests: list[LineRequest], *, lock: bool = False)
     for r in requests:
         product = products.get(r.product_id)
         line = PricedLine(request=r, product=product, variant=None, qty=r.qty)
-        if product is None or not product.is_visible:
+        if product is None or not (product.is_visible or allow_hidden):
             line.problem, line.problem_code = "This item is no longer sold.", "unavailable"
         elif product.variants:
             line.variant = next((v for v in product.variants if v.id == r.variant_id), None)
@@ -171,3 +174,6 @@ def items(db: Session, order: Order) -> list[OrderItem]:
 
 def submit_payment(db: Session, order: Order, method: str, transaction_id: str) -> None:
     payments.provider_for(method).submit_reference(db, order, method, transaction_id)
+    db.add(OrderStatusHistory(order_id=order.id, from_status=order.status, to_status=order.status,
+                              event="payment_sent", note=order.momo_txn_id))
+    db.flush()

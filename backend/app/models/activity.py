@@ -5,6 +5,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.security import utcnow
 from app.models.base import Base, IdMixin, TimestampMixin
 
 
@@ -28,7 +29,8 @@ class ActivityLog(IdMixin, TimestampMixin, Base):
     is_sensitive: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     device: Mapped[str | None] = mapped_column(String(512))
     ip: Mapped[str | None] = mapped_column(String(64))
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Set in Python so entries written in one transaction keep their order (now() is fixed per transaction).
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, server_default=func.now())
 
 
 class ActivityReview(IdMixin, TimestampMixin, Base):
@@ -38,4 +40,5 @@ class ActivityReview(IdMixin, TimestampMixin, Base):
 
     activity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("activity_log.id"), unique=True)
     reviewed_by_staff_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("staff.id"))
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Set in Python so entries written in one transaction keep their order (now() is fixed per transaction).
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, server_default=func.now())

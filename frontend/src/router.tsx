@@ -11,6 +11,10 @@ import { ShopPlaceholder } from "./routes/shop/Placeholder";
 import { ProductPage } from "./routes/shop/ProductPage";
 import { ShopPage } from "./routes/shop/ShopPage";
 import { ComingSoon, RequireCapability } from "./routes/staff/guards";
+import { DashboardPage } from "./routes/staff/DashboardPage";
+import { OrdersPage } from "./routes/staff/orders/OrdersPage";
+import { ReceiptPage } from "./routes/staff/orders/ReceiptPage";
+import { SalePage } from "./routes/staff/orders/SalePage";
 import { CategoriesPage } from "./routes/staff/products/CategoriesPage";
 import { ProductEditPage } from "./routes/staff/products/ProductEditPage";
 import { ProductsPage } from "./routes/staff/products/ProductsPage";
@@ -50,12 +54,15 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: "login", element: <StaffLogin /> },
+      // Printable receipt: signed-in staff, but outside the staff layout.
+      { path: "orders/:orderId/receipt", element: <ReceiptPage /> },
       {
         element: <StaffLayout />,
         children: [
-          { index: true, element: <ComingSoon title={nav.dashboard} stage={4} /> },
-          { path: "orders/*", element: <ComingSoon title={nav.orders} stage={4} /> },
-          { path: "sale", element: <ComingSoon title={strings.staff.tabs.sale} stage={4} /> },
+          { index: true, element: <DashboardPage /> },
+          { path: "orders", element: <OrdersPage /> },
+          { path: "orders/:orderId", element: <OrdersPage /> },
+          { path: "sale", element: <SalePage /> },
           { path: "requests", element: <ComingSoon title={nav.requests} stage={5} /> },
           {
             path: "products",

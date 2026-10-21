@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from email.message import EmailMessage
 from functools import lru_cache
 from typing import Protocol
+from urllib.parse import quote
 
 from fastapi import BackgroundTasks
 
@@ -127,3 +128,22 @@ def order_confirmation_email(
         f"\n\nPickup: {address}, {pickup_day}. We message you on WhatsApp when it is ready.{pay}"
         f"\n\nBring your order number when you collect.",
     )
+
+
+# WhatsApp click-to-chat (HANDOFF.md, "Notifications"). The app builds the link; staff press Send on the shop
+# phone, so the app can only record that WhatsApp was opened, not that the message went.
+
+
+class _KeepUnknown(dict):
+    def __missing__(self, key: str) -> str:
+        return "{" + key + "}"
+
+
+def fill_template(template: str, **values: object) -> str:
+    """Fills {name}, {order}, {total} and the like. Unknown placeholders are left as they are."""
+    return template.format_map(_KeepUnknown({k: "" if v is None else v for k, v in values.items()}))
+
+
+def whatsapp_link(phone: str | None, text: str) -> str:
+    """wa.me link with the message typed in. Without a phone, WhatsApp asks which chat to use."""
+    return f"https://wa.me/{phone or ''}?text={quote(text)}"

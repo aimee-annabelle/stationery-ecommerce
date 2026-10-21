@@ -79,6 +79,16 @@ ROUTE_CAPABILITIES = {
     ("POST", "/api/v1/staff/categories"): C.PRODUCTS_EDIT,
     ("PATCH", "/api/v1/staff/categories/{category_id}"): C.PRODUCTS_EDIT,
     ("DELETE", "/api/v1/staff/categories/{category_id}"): C.PRODUCTS_EDIT,
+    ("GET", "/api/v1/staff/dashboard"): None,
+    ("GET", "/api/v1/staff/orders"): C.ORDERS_UPDATE_STATUS,
+    ("GET", "/api/v1/staff/orders/{order_id}"): C.ORDERS_UPDATE_STATUS,
+    ("POST", "/api/v1/staff/orders"): C.ORDERS_CREATE,
+    ("POST", "/api/v1/staff/orders/{order_id}/status"): C.ORDERS_UPDATE_STATUS,
+    ("PATCH", "/api/v1/staff/orders/{order_id}/items/{item_id}"): C.ORDERS_UPDATE_STATUS,
+    ("POST", "/api/v1/staff/orders/{order_id}/verify-payment"): C.PAYMENTS_VERIFY,
+    ("POST", "/api/v1/staff/orders/{order_id}/cancel"): C.ORDERS_CANCEL,
+    ("POST", "/api/v1/staff/orders/{order_id}/whatsapp-link"): C.ORDERS_UPDATE_STATUS,
+    ("GET", "/api/v1/staff/orders/{order_id}/receipt"): C.ORDERS_UPDATE_STATUS,
 }
 
 
