@@ -3,10 +3,13 @@ class ServiceError(Exception):
 
     status_code = 400
 
-    def __init__(self, message: str, code: str | None = None, status_code: int | None = None) -> None:
+    def __init__(
+        self, message: str, code: str | None = None, status_code: int | None = None, details: object = None
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.code = code
+        self.details = details  # extra JSON for the client, for example which bag lines changed
         if status_code is not None:
             self.status_code = status_code
 

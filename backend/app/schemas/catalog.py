@@ -46,6 +46,11 @@ class CategoryPatch(Strict):
     sort_order: int | None = Field(default=None, ge=0, le=1000)
 
 
+class SpecIn(Strict):
+    label: str = Field(min_length=1, max_length=40)
+    value: str = Field(min_length=1, max_length=120)
+
+
 class ImageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -82,6 +87,8 @@ class StaffProductOut(BaseModel):
     is_low: bool
     location: str | None
     is_visible: bool
+    is_featured: bool
+    specs: list[dict]
     images: list[ImageOut]
     variants: list[VariantOut]
     low_stock_flag: LowStockFlagOut | None
@@ -116,6 +123,8 @@ class ProductIn(Strict):
     description: str = Field(default="", max_length=4000)
     location: str | None = Field(default=None, max_length=80)
     is_visible: bool = False
+    is_featured: bool = False
+    specs: list[SpecIn] = Field(default_factory=list, max_length=20)
     variants: list[VariantIn] = Field(default_factory=list, max_length=20)
 
 
@@ -129,6 +138,8 @@ class ProductPatch(Strict):
     description: str | None = Field(default=None, max_length=4000)
     location: str | None = Field(default=None, max_length=80)
     is_visible: bool | None = None
+    is_featured: bool | None = None
+    specs: list[SpecIn] | None = Field(default=None, max_length=20)
 
 
 class PhotoOrderIn(Strict):

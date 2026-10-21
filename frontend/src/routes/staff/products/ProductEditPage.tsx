@@ -7,6 +7,7 @@ import { useStaffSession } from "../../../lib/staffSession";
 import { strings } from "../../../strings";
 import {
   type Product,
+  type Spec,
   useAddPhoto,
   useAddVariant,
   useAdjustStock,
@@ -81,6 +82,8 @@ function DetailsForm({ product: p }: { product: Product }) {
     location: p.location ?? "",
     description: p.description,
     is_visible: p.is_visible,
+    is_featured: p.is_featured,
+    specs: p.specs,
   });
   const [form, setForm] = useState(initial);
   const [saved, setSaved] = useState(false);
@@ -113,6 +116,8 @@ function DetailsForm({ product: p }: { product: Product }) {
         location: form.location || null,
         description: form.description,
         is_visible: form.is_visible,
+        is_featured: form.is_featured,
+        specs: form.specs.filter((spec) => spec.label.trim() && spec.value.trim()),
       },
       { onSuccess: () => setSaved(true), onError: (err) => setError(errorText(err)) },
     );
@@ -155,6 +160,7 @@ function DetailsForm({ product: p }: { product: Product }) {
         <label className="field field-wide">
           {f.description}
           <textarea rows={3} value={form.description} onChange={set("description")} />
+          <span className="field-hint">{f.summaryHint}</span>
         </label>
         <label className="field" style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <button
@@ -172,7 +178,30 @@ function DetailsForm({ product: p }: { product: Product }) {
           </button>
           {f.inShop}
         </label>
+        <label className="field" style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <button
+            className="switch"
+            type="button"
+            role="switch"
+            aria-checked={form.is_featured}
+            aria-label={f.featured}
+            onClick={() => {
+              setSaved(false);
+              setForm({ ...form, is_featured: !form.is_featured });
+            }}
+          >
+            <span />
+          </button>
+          {f.featured}
+        </label>
       </div>
+      <SpecsEditor
+        specs={form.specs}
+        onChange={(specs) => {
+          setSaved(false);
+          setForm({ ...form, specs });
+        }}
+      />
       {error && <p role="alert" className="form-error">{error}</p>}
       <div className="form-actions">
         {saved && <span role="status" className="note note-sage" style={{ padding: "10px 14px" }}>{f.saved}</span>}
@@ -181,6 +210,47 @@ function DetailsForm({ product: p }: { product: Product }) {
         </button>
       </div>
     </form>
+  );
+}
+
+/** Label/value lines for the product page "Details" tab. */
+function SpecsEditor({ specs, onChange }: { specs: Spec[]; onChange: (specs: Spec[]) => void }) {
+  const f = t.form;
+  const update = (i: number, key: keyof Spec, value: string) =>
+    onChange(specs.map((spec, n) => (n === i ? { ...spec, [key]: value } : spec)));
+  const input = "min-h-[46px] w-full rounded-xl border border-line bg-white px-3.5 text-[15px] font-medium";
+  return (
+    <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
+      <legend className="text-[13px] font-semibold">{f.specsTitle}</legend>
+      <p className="m-0 text-xs text-muted">{f.specsIntro}</p>
+      {specs.map((spec, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2.5">
+          <label className="min-w-[140px] flex-1">
+            <span className="sr-only">{f.specLabel}</span>
+            <input className={input} placeholder={f.specLabel} value={spec.label} maxLength={40} onChange={(e) => update(i, "label", e.target.value)} />
+          </label>
+          <label className="min-w-[180px] flex-[2]">
+            <span className="sr-only">{f.specValue}</span>
+            <input className={input} placeholder={f.specValue} value={spec.value} maxLength={120} onChange={(e) => update(i, "value", e.target.value)} />
+          </label>
+          <button
+            type="button"
+            aria-label={f.removeSpec(i + 1)}
+            onClick={() => onChange(specs.filter((_, n) => n !== i))}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-paper-staff"
+          >
+            <icons.close size={12} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...specs, { label: "", value: "" }])}
+        className="min-h-11 cursor-pointer self-start rounded-full border border-line bg-white px-4 text-[13px] font-semibold"
+      >
+        {f.addSpec}
+      </button>
+    </fieldset>
   );
 }
 

@@ -73,6 +73,7 @@ class OrderItem(IdMixin, TimestampMixin, Base):
     product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("products.id"))
     variant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("product_variants.id"))
     name_snapshot: Mapped[str] = mapped_column(String(200))
+    variant_name_snapshot: Mapped[str | None] = mapped_column(String(80))
     unit_price_rwf: Mapped[int] = mapped_column(Integer)
     qty: Mapped[int] = mapped_column(Integer)
     picked: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))

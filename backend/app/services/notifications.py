@@ -100,3 +100,30 @@ def low_stock_email(to: str, *, product_name: str, sku: str, stock_qty: int, ale
         f"{flagged_by} says {product_name} (SKU {sku}) is running low.\n\n"
         f"In stock: {stock_qty}. Alert level: {alert}.",
     )
+
+
+def _rwf(amount: int) -> str:
+    return f"{amount:,} RWF"
+
+
+def order_confirmation_email(
+    to: str,
+    *,
+    number: str,
+    name: str,
+    lines: list[tuple[str, int, int]],  # (name, qty, line total)
+    total_rwf: int,
+    pickup_day: str,
+    address: str,
+    payment_steps: str | None,
+) -> Email:
+    """Receipt for an online order (HANDOFF.md, "Notifications": order placed)."""
+    items = "\n".join(f"  {qty} × {item}  {_rwf(line_total)}" for item, qty, line_total in lines)
+    pay = f"\n\nHow to pay\n{payment_steps}" if payment_steps else ""
+    return Email(
+        to,
+        f"Your Pahyems order {number}",
+        f"Hello {name},\n\nThank you. Your order {number} is in.\n\n{items}\n  Total  {_rwf(total_rwf)}"
+        f"\n\nPickup: {address}, {pickup_day}. We message you on WhatsApp when it is ready.{pay}"
+        f"\n\nBring your order number when you collect.",
+    )

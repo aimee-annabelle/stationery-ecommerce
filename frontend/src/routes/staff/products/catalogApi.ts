@@ -25,10 +25,14 @@ export type Product = {
   is_low: boolean;
   location: string | null;
   is_visible: boolean;
+  is_featured: boolean;
+  specs: Spec[];
   images: ProductImage[];
   variants: Variant[];
   low_stock_flag: { flagged_by: string; flagged_at: string } | null;
 };
+
+export type Spec = { label: string; value: string };
 
 export type Page<T> = { items: T[]; total: number; page: number; page_size: number };
 
@@ -61,6 +65,8 @@ export type ProductInput = {
   description: string;
   location: string | null;
   is_visible: boolean;
+  is_featured?: boolean;
+  specs?: Spec[];
 };
 
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });

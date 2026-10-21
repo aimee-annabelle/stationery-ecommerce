@@ -323,3 +323,19 @@ def test_categories_public_list_and_staff_management(client, seeded, headers):
 
 def test_workers_cannot_manage_categories(client, seeded, headers):
     assert client.post("/api/v1/staff/categories", json={"name": "Toys"}, headers=headers["worker"]).status_code == 403
+
+
+def test_featured_and_specs_can_be_edited_and_are_logged(client, seeded, headers):
+    pid = product_id(seeded, "SCH-001")
+
+    response = client.patch(f"{STAFF_PRODUCTS}/{pid}", headers=headers["manager"], json={
+        "is_featured": True, "specs": [{"label": "Size", "value": "A4"}, {"label": "Pages", "value": "200"}],
+    })
+
+    assert response.status_code == 200, response.text
+    assert response.json()["is_featured"] is True
+    assert response.json()["specs"][1] == {"label": "Pages", "value": "200"}
+    entry = last_log(seeded, "product.updated")
+    assert entry.after["is_featured"] is True and len(entry.after["specs"]) == 2
+    public = client.get("/api/v1/products/a4-spiral-notebook-200-pages").json()
+    assert public["specs"] == [{"label": "Size", "value": "A4"}, {"label": "Pages", "value": "200"}]

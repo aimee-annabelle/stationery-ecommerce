@@ -17,7 +17,10 @@ from app.services.context import RequestContext
 from app.services.errors import Conflict, NotFound, ServiceError
 
 # Fields a PATCH may change. Stock is not here: it changes only through stock movements.
-EDITABLE_FIELDS = ("name", "category_id", "description", "price_rwf", "cost_rwf", "sku", "low_stock_alert", "location", "is_visible")
+EDITABLE_FIELDS = (
+    "name", "category_id", "description", "price_rwf", "cost_rwf", "sku", "low_stock_alert", "location",
+    "is_visible", "is_featured", "specs",
+)
 
 
 def slugify(text: str) -> str:
@@ -133,6 +136,8 @@ def create_product(
     is_visible: bool,
     variants: list[NewVariant],
     context: RequestContext,
+    is_featured: bool = False,
+    specs: list[dict] | None = None,
 ) -> Product:
     sku = normalize_sku(sku)
     _check_category(db, category_id)
@@ -153,6 +158,8 @@ def create_product(
         low_stock_alert=low_stock_alert,
         location=(location or "").strip() or None,
         is_visible=is_visible,
+        is_featured=is_featured,
+        specs=specs or [],
     )
     db.add(product)
     for i, v in enumerate(variants):
@@ -386,3 +393,75 @@ def delete_category(db: Session, actor: Staff, category: Category, context: Requ
     db.flush()
     audit.record(db, actor, "category.deleted", entity_type="category", entity_id=category.id,
                  entity_label=category.name, before={"name": category.name}, context=context)
+
+
+# Public shop
+
+
+PUBLIC_SORTS = ("featured", "az", "za")
+
+
+def availability(stock_qty: int, low_stock_alert: int) -> str:
+    """The shop shows this instead of exact stock counts."""
+    if stock_qty <= 0:
+        return "out_of_stock"
+    return "few_left" if stock_qty < low_stock_alert else "in_stock"
+
+
+@dataclass(frozen=True)
+class PublicFilters:
+    q: str | None = None
+    categories: tuple[str, ...] = ()  # slugs
+    min_price: int | None = None
+    max_price: int | None = None
+    in_stock: bool = False
+    sort: str = "featured"
+
+
+def list_public_products(db: Session, filters: PublicFilters, page: int, page_size: int) -> tuple[list[Product], int]:
+    query = select(Product).join(Product.category).where(Product.is_visible.is_(True))
+    if filters.q:
+        term = f"%{filters.q.strip()}%"
+        query = query.where(or_(Product.name.ilike(term), Product.sku.ilike(term)))
+    if filters.categories:
+        query = query.where(Category.slug.in_(filters.categories))
+    if filters.min_price is not None:
+        query = query.where(Product.price_rwf >= filters.min_price)
+    if filters.max_price is not None:
+        query = query.where(Product.price_rwf <= filters.max_price)
+    if filters.in_stock:
+        query = query.where(Product.stock_qty > 0)
+
+    order = {
+        # Featured first; when few are featured, the newest fill in.
+        "featured": (Product.is_featured.desc(), Product.created_at.desc(), Product.name),
+        "az": (Product.name,),
+        "za": (Product.name.desc(),),
+    }[filters.sort]
+    total = db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
+    items = db.scalars(query.order_by(*order, Product.id).offset((page - 1) * page_size).limit(page_size)).all()
+    return list(items), total or 0
+
+
+def get_public_product(db: Session, slug: str) -> Product:
+    product = db.scalar(select(Product).where(Product.slug == slug, Product.is_visible.is_(True)))
+    if product is None:
+        raise NotFound("We couldn't find that product.", code="product_not_found")
+    return product
+
+
+def related_products(db: Session, product: Product, limit: int = 4) -> list[Product]:
+    """"You may also need": in-stock products from the same category, then from others."""
+    base = select(Product).where(Product.is_visible.is_(True), Product.id != product.id, Product.stock_qty > 0)
+    same = list(db.scalars(base.where(Product.category_id == product.category_id)
+                           .order_by(Product.is_featured.desc(), Product.name).limit(limit)))
+    if len(same) < limit:
+        same += list(db.scalars(base.where(Product.category_id != product.category_id)
+                                .order_by(Product.is_featured.desc(), Product.name).limit(limit - len(same))))
+    return same
+
+
+def visible_counts(db: Session) -> dict[uuid.UUID, int]:
+    return dict(db.execute(
+        select(Product.category_id, func.count()).where(Product.is_visible.is_(True)).group_by(Product.category_id)
+    ).all())

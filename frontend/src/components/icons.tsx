@@ -122,4 +122,83 @@ export const icons = {
       <path d="M15 18l-6-6 6-6" />
     </Svg>
   ),
+  check: (p: IconProps) => (
+    <Svg {...p} width={2.2}>
+      <path d="m5 12 5 5 9-10" />
+    </Svg>
+  ),
+  chevronRight: (p: IconProps) => (
+    <Svg {...p} width={2}>
+      <path d="M9 6l6 6-6 6" />
+    </Svg>
+  ),
+  arrowRight: (p: IconProps) => (
+    <Svg {...p} width={2}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </Svg>
+  ),
+  arrowLeft: (p: IconProps) => (
+    <Svg {...p} width={2}>
+      <path d="M19 12H5M11 6l-6 6 6 6" />
+    </Svg>
+  ),
+  arrowUpRight: (p: IconProps) => (
+    <Svg {...p} width={2}>
+      <path d="M7 17 17 7M8 7h9v9" />
+    </Svg>
+  ),
+  pin: (p: IconProps) => (
+    <Svg {...p} width={1.8}>
+      <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </Svg>
+  ),
+  phone: (p: IconProps) => (
+    <Svg {...p} width={1.8}>
+      <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+    </Svg>
+  ),
+  trash: (p: IconProps) => (
+    <Svg {...p} width={1.8}>
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+    </Svg>
+  ),
+  book: (p: IconProps) => (
+    <Svg {...p} width={1.8}>
+      <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z" />
+      <path d="M4 21V5M8 7h7" />
+    </Svg>
+  ),
+  mail: (p: IconProps) => (
+    <Svg {...p} width={1.5}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </Svg>
+  ),
+  // Category illustrations, used when a product has no photo.
+  note: (p: IconProps) => (
+    <Svg {...p} width={1.5}>
+      <rect x="5" y="3" width="14" height="18" rx="2" />
+      <path d="M9 3v18M12 8h4M12 12h4" />
+    </Svg>
+  ),
+  folder: (p: IconProps) => (
+    <Svg {...p} width={1.5}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </Svg>
+  ),
+  headphones: (p: IconProps) => (
+    <Svg {...p} width={1.5}>
+      <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
+      <rect x="3" y="14" width="4" height="6" rx="1.5" />
+      <rect x="17" y="14" width="4" height="6" rx="1.5" />
+    </Svg>
+  ),
+  plug: (p: IconProps) => (
+    <Svg {...p} width={1.5}>
+      <path d="M9 3v4M15 3v4" />
+      <path d="M6 7h12v4a6 6 0 0 1-12 0z" />
+      <path d="M12 17v4" />
+    </Svg>
+  ),
 };

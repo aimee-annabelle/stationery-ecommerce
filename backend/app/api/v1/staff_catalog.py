@@ -77,7 +77,7 @@ def _product_out(db: DB, products: list[Product], viewer: Staff) -> list[StaffPr
             category=CategoryOut.model_validate(p.category),
             description=p.description, price_rwf=p.price_rwf,
             stock_qty=p.stock_qty, low_stock_alert=p.low_stock_alert, is_low=p.is_low,
-            location=p.location, is_visible=p.is_visible,
+            location=p.location, is_visible=p.is_visible, is_featured=p.is_featured, specs=p.specs or [],
             images=[ImageOut.model_validate(i) for i in p.images],
             variants=[VariantOut.model_validate(v) for v in p.variants],
             low_stock_flag=flags.get(p.id),
@@ -130,6 +130,8 @@ def create_product(body: ProductIn, db: DB, editor: Editor, context: Context) ->
         description=body.description, location=body.location, is_visible=body.is_visible,
         variants=[catalog.NewVariant(v.name, v.swatch_hex, v.opening_stock) for v in body.variants],
         context=context,
+        is_featured=body.is_featured,
+        specs=[s.model_dump() for s in body.specs],
     )
     db.commit()
     return _one(db, product, editor)
@@ -138,7 +140,8 @@ def create_product(body: ProductIn, db: DB, editor: Editor, context: Context) ->
 @router.patch("/products/{product_id}", response_model=StaffProductOut, **HIDE_UNSET)
 def update_product(product_id: uuid.UUID, body: ProductPatch, db: DB, editor: Editor, context: Context) -> StaffProductOut:
     changes = body.model_dump(exclude_unset=True)
-    for required in ("name", "category_id", "price_rwf", "sku", "low_stock_alert", "description", "is_visible"):
+    for required in ("name", "category_id", "price_rwf", "sku", "low_stock_alert", "description", "is_visible",
+                     "is_featured", "specs"):
         if required in changes and changes[required] is None:
             raise ServiceError(f"{required.replace('_', ' ').capitalize()} can't be empty.", code="required")
     product = catalog.update_product(db, editor, catalog.get_product(db, product_id), changes, context)

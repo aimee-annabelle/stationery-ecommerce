@@ -30,7 +30,10 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(ServiceError)
     def service_error(_: Request, exc: ServiceError) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.message, "code": exc.code})
+        content = {"detail": exc.message, "code": exc.code}
+        if exc.details is not None:
+            content["details"] = exc.details
+        return JSONResponse(status_code=exc.status_code, content=content)
 
     app.include_router(api_router)
     app.include_router(media_router)

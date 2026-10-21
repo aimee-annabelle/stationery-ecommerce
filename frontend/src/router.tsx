@@ -2,9 +2,14 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 import { ShopLayout } from "./layouts/ShopLayout";
 import { StaffLayout } from "./layouts/StaffLayout";
 import { StaffSessionProvider } from "./lib/staffSession";
-import { AccountHome } from "./routes/account/AccountHome";
 import { NotFound } from "./routes/NotFound";
-import { ShopHome } from "./routes/shop/ShopHome";
+import { CartPage } from "./routes/shop/CartPage";
+import { CheckoutPage } from "./routes/shop/CheckoutPage";
+import { HomePage } from "./routes/shop/HomePage";
+import { OrderConfirmedPage, TrackPage } from "./routes/shop/OrderPages";
+import { ShopPlaceholder } from "./routes/shop/Placeholder";
+import { ProductPage } from "./routes/shop/ProductPage";
+import { ShopPage } from "./routes/shop/ShopPage";
 import { ComingSoon, RequireCapability } from "./routes/staff/guards";
 import { CategoriesPage } from "./routes/staff/products/CategoriesPage";
 import { ProductEditPage } from "./routes/staff/products/ProductEditPage";
@@ -19,11 +24,23 @@ export const router = createBrowserRouter([
   {
     element: <ShopLayout />,
     children: [
-      { path: "/", element: <ShopHome /> },
-      { path: "/account", element: <AccountHome /> },
+      { path: "/", element: <HomePage /> },
+      { path: "/shop", element: <ShopPage /> },
+      { path: "/shop/:slug", element: <ProductPage /> },
+      { path: "/cart", element: <CartPage /> },
+      { path: "/orders/:number/confirmed", element: <OrderConfirmedPage /> },
+      { path: "/track", element: <TrackPage /> },
+      // Stage 5 pages.
+      { path: "/services", element: <ShopPlaceholder title={strings.shop.nav.services} stage={5} /> },
+      { path: "/contact", element: <ShopPlaceholder title={strings.shop.nav.contact} stage={5} /> },
+      { path: "/login", element: <ShopPlaceholder title={strings.shop.logIn} stage={5} /> },
+      { path: "/signup", element: <ShopPlaceholder title={strings.shop.signUp} stage={5} /> },
+      { path: "/account", element: <ShopPlaceholder title={strings.shop.logIn} stage={5} /> },
       { path: "*", element: <NotFound /> },
     ],
   },
+  // Checkout has its own slim header (design/Checkout.dc.html).
+  { path: "/checkout", element: <CheckoutPage /> },
   {
     path: "/staff",
     element: (

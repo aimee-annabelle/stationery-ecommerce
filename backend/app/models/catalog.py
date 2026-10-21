@@ -13,7 +13,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, IdMixin, TimestampMixin, one_of
@@ -56,6 +56,10 @@ class Product(IdMixin, TimestampMixin, Base):
     low_stock_alert: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     location: Mapped[str | None] = mapped_column(String(80))  # shelf
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    # Shown on the home page and first in the shop's "Featured" sort.
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # The product page "Details" tab: [{"label": "Size", "value": "A4"}, ...]
+    specs: Mapped[list] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
 
     category: Mapped[Category] = relationship(lazy="joined")
     images: Mapped[list["ProductImage"]] = relationship(
@@ -68,6 +72,11 @@ class Product(IdMixin, TimestampMixin, Base):
     @property
     def is_low(self) -> bool:
         return self.stock_qty < self.low_stock_alert
+
+    @property
+    def summary(self) -> str:
+        """The short description on the product page: the first paragraph of the description."""
+        return self.description.strip().split("\n\n")[0].strip()
 
 
 class ProductImage(IdMixin, TimestampMixin, Base):
