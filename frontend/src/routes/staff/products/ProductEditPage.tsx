@@ -18,6 +18,7 @@ import {
   useUpdateProduct,
 } from "./catalogApi";
 import { CategorySelect, errorText, MovementsTable, ReceivePanel, StockBar, toInt } from "./parts";
+import { Select } from "../../../components/Select";
 
 const t = strings.products;
 
@@ -408,16 +409,13 @@ function AdjustPanel({ product: p }: { product: Product }) {
         {p.variants.length > 0 && (
           <label className="field" style={{ flex: "1 1 160px" }}>
             {t.receiveForm.option}
-            <select value={variantId} onChange={(e) => setVariantId(e.target.value)} required>
-              <option value="" disabled>
-                {t.receiveForm.chooseOption}
-              </option>
-              {p.variants.map((variant) => (
-                <option key={variant.id} value={variant.id}>
-                  {variant.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={variantId}
+              onChange={setVariantId}
+              required
+              placeholder={t.receiveForm.chooseOption}
+              options={p.variants.map((variant) => ({ value: variant.id, label: variant.name }))}
+            />
           </label>
         )}
         <label className="field" style={{ flex: "1 1 120px" }}>
@@ -426,13 +424,11 @@ function AdjustPanel({ product: p }: { product: Product }) {
         </label>
         <label className="field" style={{ flex: "1 1 160px" }}>
           {a.reason}
-          <select value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
-            {(Object.keys(a.reasons) as (keyof typeof a.reasons)[]).map((key) => (
-              <option key={key} value={key}>
-                {a.reasons[key]}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={reason}
+            onChange={(v) => setReason(v as typeof reason)}
+            options={(Object.keys(a.reasons) as (keyof typeof a.reasons)[]).map((key) => ({ value: key, label: a.reasons[key] }))}
+          />
         </label>
         <label className="field" style={{ flex: "2 1 240px" }}>
           {a.note}

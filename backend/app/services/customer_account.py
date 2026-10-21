@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, utcnow, verify_password
@@ -32,8 +32,20 @@ def change_password(db: Session, customer: Customer, current: str, new: str, kee
 # Orders
 
 
-def my_orders(db: Session, customer: Customer) -> list[Order]:
-    return list(db.scalars(select(Order).where(Order.customer_id == customer.id).order_by(Order.created_at.desc()).limit(100)))
+def _page(db: Session, query, order_by, page: int, page_size: int) -> tuple[list, int]:
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    return list(db.scalars(query.order_by(*order_by).offset((page - 1) * page_size).limit(page_size))), total
+
+
+def my_orders(db: Session, customer: Customer, page: int = 1, page_size: int = 10) -> tuple[list[Order], int]:
+    query = select(Order).where(Order.customer_id == customer.id)
+    return _page(db, query, (Order.created_at.desc(), Order.id), page, page_size)
+
+
+def current_order(db: Session, customer: Customer) -> Order | None:
+    """The newest order still on its way, for the top of C1."""
+    return db.scalar(select(Order).where(Order.customer_id == customer.id, Order.status.in_(("new", "preparing", "ready")))
+                     .order_by(Order.created_at.desc()).limit(1))
 
 
 def my_order(db: Session, customer: Customer, order_id: uuid.UUID) -> Order:
@@ -92,9 +104,17 @@ def buy_again(db: Session, customer: Customer, limit: int = 6) -> list[tuple[Ord
     return out
 
 
-def my_requests(db: Session, customer: Customer) -> list[PrintRequest]:
-    return list(db.scalars(select(PrintRequest).where(PrintRequest.customer_id == customer.id)
-                           .order_by(PrintRequest.created_at.desc()).limit(100)))
+def my_requests(db: Session, customer: Customer, page: int = 1, page_size: int = 10) -> tuple[list[PrintRequest], int]:
+    query = select(PrintRequest).where(PrintRequest.customer_id == customer.id)
+    return _page(db, query, (PrintRequest.created_at.desc(), PrintRequest.id), page, page_size)
+
+
+def open_quote(db: Session, customer: Customer) -> PrintRequest | None:
+    """A quote waiting for the customer, else the newest request still in progress."""
+    def newest(statuses: tuple[str, ...]) -> PrintRequest | None:
+        return db.scalar(select(PrintRequest).where(PrintRequest.customer_id == customer.id, PrintRequest.status.in_(statuses))
+                         .order_by(PrintRequest.created_at.desc()).limit(1))
+    return newest(("quoted",)) or newest(("new", "in_progress", "ready"))
 
 
 def my_request(db: Session, customer: Customer, request_id: uuid.UUID) -> PrintRequest:

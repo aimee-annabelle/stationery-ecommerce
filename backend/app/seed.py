@@ -79,6 +79,7 @@ SETTINGS: dict[str, object] = {
         "allow_guest_checkout": True,
         "whatsapp_ready_button": True,
         "pickup_hold_days": 3,
+        "default_low_stock_alert": 5,
     },
     "message_templates": {
         "order_ready": (
@@ -97,15 +98,18 @@ SETTINGS: dict[str, object] = {
         "footer": "Thank you for shopping with us!",
         "returns_policy": "[RETURNS POLICY]",
         "show_tin": True,
+        "email_after_payment": False,
     },
     "owner_alerts": {
-        "email": "[OWNER EMAIL]",
+        # Empty means the owner's log-in email.
+        "email": "",
+        "daily_time": "23:59",
         "cancel": True,
         "price": True,
         "stock": True,
         "daily": True,
         "login": False,
-        # HANDOFF.md says staff changes alert the owner, but S8 has no switch for it yet.
+        # Staff added, role changed, access removed or restored (a switch added to S8 in stage 6).
         "staff": True,
     },
 }

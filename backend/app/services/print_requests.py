@@ -160,7 +160,16 @@ def get(db: Session, request_id: uuid.UUID, *, lock: bool = False) -> PrintReque
     return request
 
 
-def list_requests(db: Session, *, status: str | None, q: str | None) -> list[PrintRequest]:
+def list_requests(db: Session, *, status: str | None, q: str | None, collected_limit: int = 20) -> list[PrintRequest]:
+    """The S3 board. Open work is always shown in full; the Collected column only grows, so it shows the
+    newest `collected_limit` and the board asks for more. A search or status filter returns up to 200."""
+    order = (PrintRequest.needed_by.nulls_last(), PrintRequest.created_at)
+    if not status and not (q and q.strip()):
+        open_rows = db.scalars(select(PrintRequest).where(PrintRequest.status.in_(OPEN)).order_by(*order))
+        collected = db.scalars(select(PrintRequest).where(PrintRequest.status == "collected")
+                               .order_by(PrintRequest.paid_at.desc().nulls_last(), PrintRequest.created_at.desc())
+                               .limit(collected_limit))
+        return [*open_rows, *collected]
     query = select(PrintRequest)
     if status == "open":
         query = query.where(PrintRequest.status.in_(OPEN))
@@ -176,8 +185,7 @@ def list_requests(db: Session, *, status: str | None, q: str | None) -> list[Pri
         except ValueError:
             pass
         query = query.where(or_(*conditions))
-    # Collected requests drop off the board after a while; the newest 200 are enough for S3.
-    return list(db.scalars(query.order_by(PrintRequest.needed_by.nulls_last(), PrintRequest.created_at).limit(200)))
+    return list(db.scalars(query.order_by(*order).limit(200)))
 
 
 def counts(db: Session) -> dict[str, int]:

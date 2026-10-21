@@ -9,6 +9,7 @@ import { staffApi, useStaffSession } from "../../lib/staffSession";
 import { useIsPhone } from "../../lib/useMediaQuery";
 import { strings } from "../../strings";
 import { type Dashboard, useDashboard } from "./orders/ordersApi";
+import { useReview } from "./owner/ownerApi";
 import { OrderCards } from "./orders/OrdersPage";
 
 const t = strings.dashboard;
@@ -32,44 +33,11 @@ const clock = (iso: string) =>
 const weekday = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00Z`));
 
-/** Plain words for an activity log entry ("marked order PH-0012 as Ready"). The full log comes in stage 6. */
-function describe(a: NonNullable<Dashboard["activity"]>[number]): string {
-  const after = a.after ?? {};
-  const label = a.label ?? "";
-  switch (a.action) {
-    case "order.status_changed":
-      return `marked order ${label} as ${strings.orders.status[String(after.status)] ?? after.status}`;
-    case "order.created":
-      return `recorded walk-in sale ${label}`;
-    case "order.cancelled":
-      return `cancelled order ${label}`;
-    case "order.refunded":
-      return `refunded order ${label}`;
-    case "order.payment_verified":
-      return `confirmed the payment for ${label}`;
-    case "order.payment_rejected":
-      return `couldn't find the payment for ${label}`;
-    case "order.whatsapp_opened":
-      return `opened WhatsApp for ${label}`;
-    case "stock.received":
-      return `received ${after.received} × ${label}`;
-    case "stock.adjusted":
-      return `adjusted stock of ${label} by ${after.change}`;
-    case "product.price_changed":
-      return `changed the price of ${label} to ${formatRwf(Number(after.price_rwf))}`;
-    case "product.created":
-      return `added product ${label}`;
-    case "staff.signed_in_new_device":
-      return "signed in on a new device";
-    default:
-      return `${a.action.replace(/[._]/g, " ")} ${label}`.trim();
-  }
-}
-
 export function DashboardPage() {
   const isPhone = useIsPhone();
   const board = useDashboard();
   if (!board.data) return <p>{strings.staff.loading}</p>;
+  if (isPhone && board.data.pocket) return <OwnerPocket board={board.data} />;
   return isPhone ? <PhoneHome board={board.data} /> : <DesktopDashboard board={board.data} />;
 }
 
@@ -136,7 +104,7 @@ function DesktopDashboard({ board }: { board: Dashboard }) {
               <div key={i} className="flex items-center gap-3 border-t border-paper-staff py-2.5 first-of-type:border-0">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sage text-xs font-bold">{initials(a.who)}</span>
                 <span className="flex-1 text-sm leading-normal">
-                  <strong className="font-semibold">{a.who}</strong> {describe(a)}
+                  <strong className="font-semibold">{a.who}</strong> {a.what}
                 </span>
                 <span className="text-[13px] whitespace-nowrap text-muted">{clock(a.at)}</span>
               </div>
@@ -337,6 +305,64 @@ function PhoneHome({ board }: { board: Dashboard }) {
         <span className="text-[13px] text-muted">{strings.orders.queueHint}</span>
       </div>
       <OrderCards rows={board.queue} />
+    </div>
+  );
+}
+
+/** M6 · Owner pocket view (design/MobileOwner.dc.html): today at a glance and "Needs your eye". */
+function OwnerPocket({ board }: { board: Dashboard }) {
+  const { staff } = useStaffSession();
+  const review = useReview();
+  const p = strings.pocket;
+  const pocket = board.pocket!;
+  const days = board.sales_7d ?? [];
+  const max = Math.max(1, ...days.map((d) => d.total_rwf));
+  const today = new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "Africa/Kigali" }).format(new Date());
+  const flagged = (board.low_stock ?? []).filter((l) => l.flagged).length;
+  const tile = "flex flex-col gap-0.5 rounded-[18px] p-3.5";
+  return (
+    <div className="flex flex-col gap-4">
+      <header className="flex items-center justify-between gap-3 pt-7">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[13px] text-muted">{today}</span>
+          <span className="font-heading text-[28px] font-semibold">{p.today(staff?.name ?? "")}</span>
+        </div>
+        <span className="flex size-11 items-center justify-center rounded-full bg-blush text-sm font-bold">{initials(staff?.name ?? "")}</span>
+      </header>
+      <div className="grid grid-cols-2 gap-2">
+        <div className={`${tile} bg-sage`}><span className="text-xs font-medium">{p.sales}</span><span className="text-lg font-bold">{formatRwf(board.kpis.sales_today_rwf ?? 0)}</span><span className="text-xs">{p.salesToday("")}</span></div>
+        <div className={`${tile} bg-lilac`}><span className="text-xs font-medium">{p.orders}</span><span className="text-lg font-bold">{board.kpis.orders_today ?? 0}</span><span className="text-xs">{p.split(pocket.online_today, pocket.walk_in_today)}</span></div>
+        <div className={`${tile} bg-blush`}><span className="text-xs font-medium">{p.requests}</span><span className="text-lg font-bold">{p.open(board.kpis.open_print_requests ?? 0)}</span><span className="text-xs">{p.dueTomorrow(pocket.requests_due_tomorrow)}</span></div>
+        <div className={`${tile} bg-butter`}><span className="text-xs font-medium">{p.low}</span><span className="text-lg font-bold">{p.items(board.kpis.low_stock_items ?? 0)}</span><span className="text-xs">{p.flagged(flagged)}</span></div>
+      </div>
+      <div className="flex flex-col gap-2 rounded-[20px] bg-white p-3.5">
+        <span className="text-sm font-bold">{p.week}</span>
+        <div className="flex h-24 items-end gap-1.5">
+          {days.map((d, i) => <span key={d.day} className={`flex-1 rounded-t-md ${i === days.length - 1 ? "bg-ink" : "bg-sage"}`} style={{ height: `${Math.max(3, (d.total_rwf / max) * 100)}%` }} aria-label={`${weekday(d.day)}: ${formatRwf(d.total_rwf)}`} />)}
+        </div>
+        <div className="flex gap-1.5">{days.map((d) => <span key={d.day} className="flex-1 text-center text-[11px] text-muted">{weekday(d.day)}</span>)}</div>
+      </div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-base font-bold">{p.eye}</span>
+        <span className="text-xs text-muted">{pocket.needs_eye.length}</span>
+      </div>
+      {pocket.needs_eye.map((a) => (
+        <div key={a.id} className="flex flex-col gap-2.5 rounded-[20px] bg-white p-3.5">
+          <span className="flex items-start gap-2.5">
+            <span className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-butter text-[11px] font-bold">{initials(a.who)}</span>
+            <span className="flex flex-col gap-0.5 text-sm">
+              <span><strong className="font-semibold">{a.who}</strong> {a.what}</span>
+              <span className="text-xs text-muted">{clock(a.at)} · {a.kind_label}</span>
+            </span>
+          </span>
+          <span className="flex gap-2">
+            <button type="button" disabled={review.isPending} onClick={() => review.mutate(a.id)} className="min-h-[42px] flex-1 cursor-pointer rounded-xl bg-ink text-[13px] font-semibold text-white">{p.ok}</button>
+            <Link to="/staff/activity?sensitive=1" className="flex min-h-[42px] flex-1 items-center justify-center rounded-xl border border-line text-[13px] font-semibold no-underline">{p.details}</Link>
+          </span>
+        </div>
+      ))}
+      {pocket.needs_eye.length === 0 && <div role="status" className="rounded-[20px] bg-sage p-4 text-sm">{p.allClear}</div>}
+      <MessagesCard />
     </div>
   );
 }

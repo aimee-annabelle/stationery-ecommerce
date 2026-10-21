@@ -137,6 +137,20 @@ def test_assign_and_board_counts(client, seeded, headers, team):
     assert board["counts"] == {"new": 1} and {s["name"] for s in board["staff"]} >= {team["worker"].name}
 
 
+def test_board_shows_all_open_work_and_newest_collected(client, seeded, headers):
+    numbers = [send(client).json()["number"] for _ in range(4)]
+    rows = {r.number: r for r in seeded.scalars(select(PrintRequest))}
+    for i, number in enumerate(numbers[:3]):
+        rows[number].status = "collected"
+        rows[number].paid_at = rows[number].created_at + timedelta(hours=i)
+    seeded.flush()
+
+    board = client.get(f"{STAFF_REQUESTS}?collected_limit=2", headers=headers["worker"]).json()
+
+    assert [r["number"] for r in board["items"]] == [numbers[3], numbers[2], numbers[1]]
+    assert board["counts"]["collected"] == 3
+
+
 def test_staff_can_add_a_phone_request(client, seeded, headers, storage):
     response = client.post(STAFF_REQUESTS, data=form("binding"), headers=headers["worker"])
 

@@ -9,9 +9,11 @@ import { formatRwf } from "../../../lib/format";
 import { staffApi, staffDownload } from "../../../lib/staffSession";
 import { useIsPhone } from "../../../lib/useMediaQuery";
 import { strings } from "../../../strings";
+import { Select } from "../../../components/Select";
 
 const t = strings.requests;
 const STAGES = ["new", "quoted", "in_progress", "ready", "collected"] as const;
+const COLLECTED_STEP = 20;
 const DOT: Record<string, string> = { new: "bg-[#8A79B8]", quoted: "bg-[#C9A227]", in_progress: "bg-terracotta", ready: "bg-[#3E6B52]", collected: "bg-[#8C8C86]" };
 const TAG: Record<string, string> = { invitations: "bg-blush", binding: "bg-sage" };
 
@@ -43,8 +45,14 @@ const errorText = (e: unknown) => (e instanceof ApiError ? e.message : e ? strin
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 const kigaliToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Kigali" }).format(new Date());
 
-function useBoard() {
-  return useQuery({ queryKey: ["staff", "requests"], queryFn: () => staffApi<Board>("/staff/print-requests"), placeholderData: keepPreviousData, refetchInterval: 30_000 });
+/** Open work comes in full; the Collected column shows the newest `collected` and grows on request. */
+function useBoard(collected = COLLECTED_STEP) {
+  return useQuery({
+    queryKey: ["staff", "requests", "board", collected],
+    queryFn: () => staffApi<Board>(`/staff/print-requests?collected_limit=${collected}`),
+    placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
+  });
 }
 function useRequest(id?: string) {
   return useQuery({ queryKey: ["staff", "requests", id], queryFn: () => staffApi<Request>(`/staff/print-requests/${id}`), enabled: !!id });
@@ -55,7 +63,7 @@ function useRequestMutation<T>(request: (args: T) => Promise<Request>) {
     mutationFn: request,
     onSuccess: (r) => {
       client.setQueryData(["staff", "requests", r.id], r);
-      client.invalidateQueries({ queryKey: ["staff", "requests"], exact: true });
+      client.invalidateQueries({ queryKey: ["staff", "requests", "board"] });
       client.invalidateQueries({ queryKey: ["staff", "dashboard"] });
     },
   });
@@ -99,7 +107,8 @@ function Card({ r, selected, to }: { r: Request; selected?: boolean; to: string 
 }
 
 function DesktopBoard({ selectedId }: { selectedId?: string }) {
-  const board = useBoard();
+  const [collected, setCollected] = useState(COLLECTED_STEP);
+  const board = useBoard(collected);
   const [adding, setAdding] = useState(false);
   const items = board.data?.items ?? [];
   return (
@@ -126,6 +135,11 @@ function DesktopBoard({ selectedId }: { selectedId?: string }) {
                   {t.stages[stage]} <span className="text-muted">{board.data?.counts[stage] ?? 0}</span>
                 </span>
                 {column.map((r) => <Card key={r.id} r={r} selected={r.id === selectedId} to={`/staff/requests/${r.id}`} />)}
+                {stage === "collected" && column.length < (board.data?.counts.collected ?? 0) && (
+                  <button type="button" onClick={() => setCollected(collected + COLLECTED_STEP)} className="min-h-11 cursor-pointer rounded-full border border-line bg-white px-4 text-[13px] font-semibold">
+                    {t.showOlder}
+                  </button>
+                )}
               </div>
             );
           })}
@@ -155,14 +169,11 @@ function DesktopPanel({ id, staff }: { id: string; staff: Board["staff"] }) {
       <Files r={r} />
       <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         {t.assignedTo}
-        <select
+        <Select
           value={r.assigned_staff_id ?? ""}
-          onChange={(e) => assign.mutate({ assigned_staff_id: e.target.value || null })}
-          className="min-h-[46px] rounded-xl border border-line bg-white px-3 text-[15px] font-medium"
-        >
-          <option value="">{t.nobody}</option>
-          {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+          onChange={(id) => assign.mutate({ assigned_staff_id: id || null })}
+          options={[{ value: "", label: t.nobody }, ...staff.map((s) => ({ value: s.id, label: s.name }))]}
+        />
       </label>
       <Actions r={r} />
       <History r={r} />
@@ -345,7 +356,7 @@ function NewRequestForm({ onDone }: { onDone: () => void }) {
       return staffApi<Request>("/staff/print-requests", { method: "POST", body: form });
     },
     onSuccess: (r) => {
-      client.invalidateQueries({ queryKey: ["staff", "requests"], exact: true });
+      client.invalidateQueries({ queryKey: ["staff", "requests", "board"] });
       onDone();
       navigate(`/staff/requests/${r.id}`);
     },
@@ -359,10 +370,12 @@ function NewRequestForm({ onDone }: { onDone: () => void }) {
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">{t.phone}<input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07X XXX XXXX" className={field} required /></label>
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           {t.service}
-          <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className={field}>
-            <option value="invitations">{strings.services.invitations}</option>
-            <option value="binding">{strings.services.binding}</option>
-          </select>
+          <Select
+            value={kind}
+            onChange={(v) => setKind(v as typeof kind)}
+            options={[{ value: "invitations", label: strings.services.invitations }, { value: "binding", label: strings.services.binding }]}
+            className={`${field} text-ink`}
+          />
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">{t.quantity}<input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} className={field} required /></label>
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">{t.neededBy}<input type="date" min={kigaliToday()} value={neededBy} onChange={(e) => setNeededBy(e.target.value)} className={field} /></label>

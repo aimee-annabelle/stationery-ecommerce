@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.models import ActivityLog, Staff
+from app.services import owner_alerts
 from app.services.context import RequestContext
 
 
@@ -109,4 +110,5 @@ def record(
     )
     db.add(entry)
     db.flush()
+    owner_alerts.maybe_queue(db, entry, actor, spec.owner_alert)
     return entry

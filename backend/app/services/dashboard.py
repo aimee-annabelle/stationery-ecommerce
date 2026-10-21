@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 
 from app.core.permissions import Capability, has_capability
 from app.models import ActivityLog, LowStockFlag, Order, OrderItem, PrintRequest, Product, Staff, StockMovement
+from app.services import activity as activity_service
 from app.services import shop_settings
+from app.services.activity_text import describe
 from app.services.staff_orders import OPEN_STATUSES, customer_name, kigali_day_start, payment_label
 
 RECENT = 5
@@ -120,7 +122,8 @@ def build(db: Session, staff: Staff) -> dict:
             .where(ActivityLog.at >= start, ActivityLog.at < end)
             .order_by(ActivityLog.at.desc()).limit(RECENT)
         ).all()
-        out["activity"] = [{"action": e[0], "label": e[1], "after": e[2], "at": e[3], "who": e[4]} for e in entries]
+        out["activity"] = [{"action": e[0], "label": e[1], "after": e[2], "at": e[3], "who": e[4],
+                            "what": describe(e[0], e[1], None, e[2])} for e in entries]
         shift = db.execute(
             select(Staff.name, Staff.role, func.count(ActivityLog.id))
             .join(ActivityLog, ActivityLog.staff_id == Staff.id)
@@ -129,5 +132,15 @@ def build(db: Session, staff: Staff) -> dict:
             .order_by(func.count(ActivityLog.id).desc())
         ).all()
         out["on_shift"] = [{"name": s[0], "role": s[1], "actions": s[2]} for s in shift]
+        # M6 owner pocket view.
+        sources = dict(db.execute(select(Order.source, func.count()).where(
+            Order.created_at >= start, Order.created_at < end, Order.status != "cancelled").group_by(Order.source)).all())
+        out["pocket"] = {
+            "online_today": sources.get("online", 0),
+            "walk_in_today": sources.get("walk_in", 0),
+            "requests_due_tomorrow": db.scalar(select(func.count()).select_from(PrintRequest).where(
+                PrintRequest.status.in_(("new", "quoted", "in_progress")), PrintRequest.needed_by == today + timedelta(days=1))) or 0,
+            "needs_eye": activity_service.needs_eye(db),
+        }
     return out
 

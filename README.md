@@ -54,4 +54,4 @@ The API applies migrations when it starts.
 3. Shop and checkout: done. Shop at http://localhost:5173, order tracking at /track.
 4. Staff orders: done. Dashboard, orders, walk-in sales and receipts under /staff.
 5. Print requests and accounts: done. Services, contact, customer sign-up, log-in and My account; staff print requests under /staff/requests.
-6. Owner tools: next.
+6. Owner tools: done. Reports, activity log, staff & roles, settings and the daily summary under /staff (owner only).

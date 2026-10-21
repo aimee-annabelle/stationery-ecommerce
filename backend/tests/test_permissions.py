@@ -99,6 +99,17 @@ ROUTE_CAPABILITIES = {
     ("GET", "/api/v1/staff/print-requests/{request_id}/files/{file_id}"): C.PRINT_REQUESTS_MANAGE,
     ("GET", "/api/v1/staff/contact-messages"): None,
     ("POST", "/api/v1/staff/contact-messages/{message_id}/handled"): None,
+    ("GET", "/api/v1/staff/reports"): C.REPORTS_VIEW,
+    ("GET", "/api/v1/staff/reports/export"): C.REPORTS_VIEW,
+    ("GET", "/api/v1/staff/activity"): C.ACTIVITY_VIEW,
+    ("GET", "/api/v1/staff/activity/export"): C.ACTIVITY_VIEW,
+    ("POST", "/api/v1/staff/activity/{activity_id}/reviewed"): C.ACTIVITY_VIEW,
+    ("GET", "/api/v1/staff/team"): C.STAFF_MANAGE,
+    ("POST", "/api/v1/staff/team/invite"): C.STAFF_MANAGE,
+    ("POST", "/api/v1/staff/team/{staff_id}/invite"): C.STAFF_MANAGE,
+    ("PATCH", "/api/v1/staff/team/{staff_id}"): C.STAFF_MANAGE,
+    ("GET", "/api/v1/staff/settings"): C.SETTINGS_MANAGE,
+    ("PATCH", "/api/v1/staff/settings"): C.SETTINGS_MANAGE,
 }
 
 

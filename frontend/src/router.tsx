@@ -8,6 +8,11 @@ import { SignupPage } from "./routes/account/SignupPage";
 import { NotFound } from "./routes/NotFound";
 import { ContactPage } from "./routes/shop/ContactPage";
 import { ServicesPage } from "./routes/shop/ServicesPage";
+import { InvitePage } from "./routes/staff/InvitePage";
+import { ActivityPage } from "./routes/staff/owner/ActivityPage";
+import { ReportsPage } from "./routes/staff/owner/ReportsPage";
+import { SettingsPage } from "./routes/staff/owner/SettingsPage";
+import { TeamPage } from "./routes/staff/owner/TeamPage";
 import { RequestsPage } from "./routes/staff/requests/RequestsPage";
 import { CartPage } from "./routes/shop/CartPage";
 import { CheckoutPage } from "./routes/shop/CheckoutPage";
@@ -15,7 +20,7 @@ import { HomePage } from "./routes/shop/HomePage";
 import { OrderConfirmedPage, TrackPage } from "./routes/shop/OrderPages";
 import { ProductPage } from "./routes/shop/ProductPage";
 import { ShopPage } from "./routes/shop/ShopPage";
-import { ComingSoon, RequireCapability } from "./routes/staff/guards";
+import { RequireCapability } from "./routes/staff/guards";
 import { DashboardPage } from "./routes/staff/DashboardPage";
 import { OrdersPage } from "./routes/staff/orders/OrdersPage";
 import { ReceiptPage } from "./routes/staff/orders/ReceiptPage";
@@ -24,9 +29,7 @@ import { CategoriesPage } from "./routes/staff/products/CategoriesPage";
 import { ProductEditPage } from "./routes/staff/products/ProductEditPage";
 import { ProductsPage } from "./routes/staff/products/ProductsPage";
 import { StaffLogin } from "./routes/staff/StaffLogin";
-import { strings } from "./strings";
 
-const nav = strings.staff.nav;
 
 // Three areas in one app (HANDOFF.md, "Tech stack"): public shop, customer account, staff back office.
 export const router = createBrowserRouter([
@@ -59,6 +62,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: "login", element: <StaffLogin /> },
+      { path: "invite", element: <InvitePage /> },
       // Printable receipt: signed-in staff, but outside the staff layout.
       { path: "orders/:orderId/receipt", element: <ReceiptPage /> },
       {
@@ -96,18 +100,14 @@ export const router = createBrowserRouter([
           },
           ...(
             [
-              ["reports", nav.reports, "reports.view"],
-              ["activity", nav.activity, "activity.view"],
-              ["team", nav.team, "staff.manage"],
-              ["settings", nav.settings, "settings.manage"],
+              ["reports", <ReportsPage />, "reports.view"],
+              ["activity", <ActivityPage />, "activity.view"],
+              ["team", <TeamPage />, "staff.manage"],
+              ["settings", <SettingsPage />, "settings.manage"],
             ] as const
-          ).map(([path, title, capability]) => ({
+          ).map(([path, page, capability]) => ({
             path,
-            element: (
-              <RequireCapability capability={capability}>
-                <ComingSoon title={title} stage={6} />
-              </RequireCapability>
-            ),
+            element: <RequireCapability capability={capability}>{page}</RequireCapability>,
           })),
           { path: "*", element: <NotFound /> },
         ],

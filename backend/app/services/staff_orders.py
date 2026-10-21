@@ -16,10 +16,10 @@ from app.core.permissions import Capability, has_capability
 from app.core.phone import format_phone, normalize_phone
 from app.core.security import utcnow
 from app.models import Order, OrderItem, OrderStatusHistory, Product, Staff
-from app.services import audit, orders, shop_settings, stock
+from app.services import audit, orders, outbox, shop_settings, stock
 from app.services.context import RequestContext
 from app.services.errors import Forbidden, NotFound, ServiceError
-from app.services.notifications import fill_template, whatsapp_link
+from app.services.notifications import Email, fill_template, whatsapp_link
 from app.services.payments import METHOD_LABELS, MOBILE_MONEY
 
 NEXT_STATUS = {"new": "preparing", "preparing": "ready", "ready": "collected"}
@@ -207,6 +207,16 @@ def create_walk_in(
 # Status changes
 
 
+def queue_receipt(db: Session, order: Order) -> None:
+    """S8 "Email the receipt after payment": sent once the payment is saved, if the customer gave an email."""
+    if not order.guest_email or not shop_settings.get(db, "receipt", {}).get("email_after_payment"):
+        return
+    footer = shop_settings.get(db, "receipt", {}).get("footer", "")
+    lines = receipt_lines(orders.items(db, order))
+    outbox.queue(db, Email(order.guest_email, f"Your Pahyems receipt {order.number}",
+                           f"Receipt {order.number}\n\n{lines}\n\nTotal {order.total_rwf:,} RWF\nPaid: {payment_label(order)}\n\n{footer}"))
+
+
 def advance(db: Session, actor: Staff, order: Order, *, paid_with: str | None, context: RequestContext) -> Order:
     """One step forward. Ready needs every item picked; Collected needs the order paid. A pay-at-pickup
     order is paid at the counter, so collecting it records Cash or Mobile Money."""
@@ -228,6 +238,7 @@ def advance(db: Session, actor: Staff, order: Order, *, paid_with: str | None, c
         order.payment_status = "paid"
         order.paid_with = paid_with
         order.paid_at = utcnow()
+        queue_receipt(db, order)
 
     _history(db, order, actor, nxt, from_status=order.status)
     order.status = nxt
@@ -263,6 +274,7 @@ def verify_payment(db: Session, actor: Staff, order: Order, *, found: bool, cont
         order.paid_with = order.payment_method
         order.paid_at = order.payment_verified_at = utcnow()
         order.payment_verified_by_staff_id = actor.id
+        queue_receipt(db, order)
     else:
         # Keeps the order. The ID is released so it doesn't block another order, and kept in the history.
         order.payment_status = "rejected"

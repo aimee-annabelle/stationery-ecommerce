@@ -69,7 +69,13 @@ export type Dashboard = {
   low_stock?: { product_id: string; name: string; left: number; alert: number; flagged: boolean }[];
   restock?: { product_id: string; name: string; left: number; alert: number; flagged: boolean }[];
   moves?: { name: string; change: number; reason: string; by: string }[];
-  activity?: { action: string; label: string | null; after: Record<string, unknown> | null; at: string; who: string }[];
+  activity?: { action: string; label: string | null; after: Record<string, unknown> | null; at: string; who: string; what: string }[];
+  pocket?: {
+    online_today: number;
+    walk_in_today: number;
+    requests_due_tomorrow: number;
+    needs_eye: { id: string; at: string; who: string; what: string; kind_label: string; action: string }[];
+  };
   on_shift?: { name: string; role: string; actions: number }[];
 };
 

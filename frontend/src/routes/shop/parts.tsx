@@ -6,7 +6,7 @@ import { formatRwf } from "../../lib/format";
 import { useCustomerSession } from "../../lib/customerSession";
 import { strings } from "../../strings";
 import { bag, bagUnits, useBag } from "./bag";
-import type { Availability, ProductCard as Card, Tint } from "./shopApi";
+import { type Availability, type ProductCard as Card, type Tint, useOpeningHours } from "./shopApi";
 
 const t = strings.shop;
 
@@ -134,6 +134,7 @@ export function ShopHeader() {
 }
 
 export function ShopFooter() {
+  const hours = useOpeningHours(t.hours);
   return (
     <footer className="mt-6 border-t border-[#E4E0D6]">
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-x-12 gap-y-4 px-4 py-12 sm:px-6">
@@ -145,7 +146,7 @@ export function ShopFooter() {
           <a href={t.phoneHref} className="font-semibold no-underline">
             {t.phone}
           </a>
-          <span>{t.hours}</span>
+          <span>{hours}</span>
           <Link to="/contact" className="no-underline">
             {t.contactFaq}
           </Link>

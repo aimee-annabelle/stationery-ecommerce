@@ -24,17 +24,3 @@ export function RequireCapability({ capability, children }: { capability: Capabi
   const { can } = useStaffSession();
   return can(capability) ? <>{children}</> : <AccessDenied />;
 }
-
-/** A staff page from a later build stage. */
-export function ComingSoon({ title, stage }: { title: string; stage: number }) {
-  return (
-    <>
-      <div className="page-head">
-        <div>
-          <h1>{title}</h1>
-          <p>{strings.staff.comingSoon(stage)}</p>
-        </div>
-      </div>
-    </>
-  );
-}

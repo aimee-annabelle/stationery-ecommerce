@@ -10,7 +10,8 @@ import { formatPhone, formatRwf } from "../../lib/format";
 import { strings } from "../../strings";
 import { bag, placedOrders, useBag } from "./bag";
 import { Price, ProductArt } from "./parts";
-import { type PaymentMethod, useBagQuote, usePlaceOrder, usePublicSettings } from "./shopApi";
+import { type PaymentMethod, useBagQuote, useOpeningHours, usePlaceOrder, usePublicSettings } from "./shopApi";
+import { Select } from "../../components/Select";
 
 const t = strings.shop.checkout;
 
@@ -32,6 +33,7 @@ export function CheckoutPage() {
   const settings = usePublicSettings();
   const place = usePlaceOrder();
   const { customer } = useCustomerSession();
+  const hours = useOpeningHours("[OPENING HOURS]");
 
   // Signed-in customers start with their own details (they can still change them for this order).
   const [name, setName] = useState(customer?.name ?? "");
@@ -163,7 +165,7 @@ export function CheckoutPage() {
                 <icons.pin size={20} />
                 <span className="flex flex-col gap-0.5">
                   <span className="font-semibold">{t.shopLine}</span>
-                  <span className="text-sm text-[#3C4A42]">{t.openLine}</span>
+                  <span className="text-sm text-[#3C4A42]">{t.openLine.replace("[OPENING HOURS]", hours)}</span>
                 </span>
               </div>
               <div className="flex flex-col gap-2.5">
@@ -178,13 +180,12 @@ export function CheckoutPage() {
                 {choice === "later" && days.later.length > 0 && (
                   <label className="flex max-w-[360px] flex-col gap-2 text-sm font-semibold">
                     {t.chooseDay}
-                    <select value={laterDay || days.later[0]} onChange={(e) => setLaterDay(e.target.value)} className={inputClass(false)}>
-                      {days.later.map((d) => (
-                        <option key={d} value={d}>
-                          {dayLabel(d)}
-                        </option>
-                      ))}
-                    </select>
+                    <Select
+                      value={laterDay || days.later[0]}
+                      onChange={setLaterDay}
+                      options={days.later.map((d) => ({ value: d, label: dayLabel(d) }))}
+                      className={inputClass(false)}
+                    />
                   </label>
                 )}
               </div>

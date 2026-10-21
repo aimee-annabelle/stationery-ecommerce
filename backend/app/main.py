@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +9,8 @@ from fastapi.responses import JSONResponse
 from app.api.v1 import router as api_router
 from app.api.v1.catalog import media_router
 from app.core.config import Settings, get_settings
+from app.core.db import SessionLocal
+from app.services import daily_summary
 from app.services.errors import ServiceError
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +23,15 @@ def create_app() -> FastAPI:
     if settings.environment == "production" and (settings.jwt_secret == DEFAULT_SECRET or not settings.cookie_secure):
         raise RuntimeError("Set JWT_SECRET and COOKIE_SECURE=true before running in production.")
 
-    app = FastAPI(title="Pahyems Store API", version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        # The daily summary scheduler (a worker queue can replace this later; HANDOFF.md "Background jobs").
+        task = None if settings.environment == "test" else asyncio.create_task(daily_summary.run_forever(SessionLocal))
+        yield
+        if task:
+            task.cancel()
+
+    app = FastAPI(title="Pahyems Store API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.frontend_origin],

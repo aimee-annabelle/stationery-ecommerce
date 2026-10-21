@@ -8,7 +8,8 @@ import { useStaffSession } from "../../../lib/staffSession";
 import { strings } from "../../../strings";
 import { AddProductPanel } from "./AddProductPanel";
 import { useProducts, useUpdateProduct } from "./catalogApi";
-import { MovementsTable, Pager, ReceivePanel, StockBar, Thumb } from "./parts";
+import { Pager } from "../../../components/Pager";
+import { MovementsTable, ReceivePanel, StockBar, Thumb } from "./parts";
 
 const t = strings.products;
 const PAGE_SIZE = 50;

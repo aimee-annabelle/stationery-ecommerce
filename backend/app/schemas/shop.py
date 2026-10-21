@@ -154,5 +154,7 @@ class PublicSettingsOut(BaseModel):
     payment_methods: dict
     allow_guest_checkout: bool
     pickup_hold_days: int
+    default_low_stock_alert: int
+    closures: list[str]
     pickup_days: list[date]
     returns_policy: str | None

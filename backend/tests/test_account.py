@@ -46,7 +46,7 @@ def test_signed_in_checkout_links_order_and_empties_server_bag(client, seeded, n
     order = seeded.scalar(select(Order).where(Order.number == placed.json()["number"]))
     assert order.customer_id is not None
     assert client.get("/api/v1/cart", headers=h).json()["lines"] == []
-    mine = client.get("/api/v1/me/orders", headers=h).json()
+    mine = client.get("/api/v1/me/orders", headers=h).json()["items"]
     assert [o["number"] for o in mine] == [order.number] and mine[0]["items"] == "A4 spiral notebook, 200 pages × 2"
 
 
@@ -57,10 +57,26 @@ def test_customers_only_see_their_own_orders(client, seeded, notifier):
     oid = str(seeded.scalar(select(Order.id).where(Order.number == number)))
     other = customer(client, notifier, email="other@example.com", name="Other Person")
 
-    assert client.get("/api/v1/me/orders", headers=other).json() == []
+    assert client.get("/api/v1/me/orders", headers=other).json()["items"] == []
     assert client.get(f"/api/v1/me/orders/{oid}", headers=other).status_code == 404
     assert client.post(f"/api/v1/me/orders/{oid}/cancel", headers=other).status_code == 404
     assert client.get("/api/v1/me/orders").status_code == 401
+
+
+def test_my_orders_are_paged_newest_first(client, seeded, notifier):
+    h = customer(client, notifier)
+    pid = product_id(seeded, "SCH-002")
+    numbers = [client.post("/api/v1/orders", json=order_body(seeded, [{"product_id": pid, "qty": 1}]), headers=h).json()["number"]
+               for _ in range(3)]
+
+    first = client.get("/api/v1/me/orders?page_size=2", headers=h).json()
+    second = client.get("/api/v1/me/orders?page_size=2&page=2", headers=h).json()
+
+    assert first["total"] == 3 and [o["number"] for o in first["items"]] == numbers[:0:-1]
+    assert [o["number"] for o in second["items"]] == numbers[:1]
+    assert client.get("/api/v1/me/orders?page_size=51", headers=h).status_code == 422
+    # The overview still finds the newest open order, whatever page it is on.
+    assert client.get("/api/v1/me/overview", headers=h).json()["current_order"]["number"] == numbers[-1]
 
 
 def test_customer_can_cancel_only_new_unpaid_orders(client, seeded, notifier, headers):
@@ -72,7 +88,7 @@ def test_customer_can_cancel_only_new_unpaid_orders(client, seeded, notifier, he
     client.post(f"/api/v1/orders/{second}/payment", json={"phone": "0788123456", "method": "momo", "transaction_id": "ABC12345"})
     ids = {n: str(seeded.scalar(select(Order.id).where(Order.number == n))) for n in (first, second)}
 
-    rows = {o["number"]: o["can_cancel"] for o in client.get("/api/v1/me/orders", headers=h).json()}
+    rows = {o["number"]: o["can_cancel"] for o in client.get("/api/v1/me/orders", headers=h).json()["items"]}
     assert rows == {first: True, second: False}
     assert client.post(f"/api/v1/me/orders/{ids[second]}/cancel", headers=h).json()["code"] == "call_to_cancel"
     cancelled = client.post(f"/api/v1/me/orders/{ids[first]}/cancel", headers=h).json()

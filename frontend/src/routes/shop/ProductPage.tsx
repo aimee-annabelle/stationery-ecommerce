@@ -6,7 +6,7 @@ import { icons } from "../../components/icons";
 import { strings } from "../../strings";
 import { bag } from "./bag";
 import { availabilityLine, BagBar, Breadcrumb, Price, ProductArt, Stepper, TINT_BG } from "./parts";
-import { type ProductDetail, usePublicSettings, useProduct } from "./shopApi";
+import { type ProductDetail, useOpeningHours, usePublicSettings, useProduct } from "./shopApi";
 
 const t = strings.shop.product;
 type Tab = "desc" | "specs" | "pickup";
@@ -32,6 +32,7 @@ export function ProductPage() {
 function ProductView({ product: p }: { product: ProductDetail }) {
   const navigate = useNavigate();
   const settings = usePublicSettings();
+  const hours = useOpeningHours("[OPENING HOURS]");
   const firstAvailable = p.variants.find((v) => v.availability !== "out_of_stock");
   const [variantId, setVariantId] = useState<string | null>(firstAvailable?.id ?? null);
   const [photo, setPhoto] = useState(0);
@@ -246,7 +247,7 @@ function ProductView({ product: p }: { product: ProductDetail }) {
             ))}
           {tab === "pickup" && (
             <div className="flex flex-col gap-3 text-base leading-[1.7] text-[#3C4A42]">
-              <p className="m-0">{t.pickupInfo}</p>
+              <p className="m-0">{t.pickupInfo.replace("[OPENING HOURS]", hours)}</p>
               <p className="m-0">{settings.data?.returns_policy ?? t.returnsFallback}</p>
             </div>
           )}

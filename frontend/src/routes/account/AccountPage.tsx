@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { icons } from "../../components/icons";
+import { Pager } from "../../components/Pager";
 import { ApiError } from "../../lib/api";
 import { formatDateTime, formatPhone, formatRwf } from "../../lib/format";
 import { useCustomerSession } from "../../lib/customerSession";
@@ -182,15 +183,16 @@ function OverviewTab() {
 }
 
 function OrdersTab() {
-  const orders = useMyOrders();
+  const [page, setPage] = useState(1);
+  const orders = useMyOrders(page);
   const reorder = useReorder();
   const cancel = useCancelMyOrder();
   const navigate = useNavigate();
   if (!orders.data) return <p>{strings.shop.loading}</p>;
-  if (orders.data.length === 0) return <p className={card}>{t.noOrders}</p>;
+  if (orders.data.total === 0) return <p className={card}>{t.noOrders}</p>;
   return (
     <div className="flex flex-col gap-3">
-      {orders.data.map((o) => (
+      {orders.data.items.map((o) => (
         <div key={o.id} className="flex flex-wrap items-center gap-x-7 gap-y-3.5 rounded-[28px] bg-white px-6 py-[22px]">
           <span className="flex flex-[0_0_110px] flex-col gap-0.5">
             <span className="font-bold">{o.number}</span>
@@ -220,18 +222,20 @@ function OrdersTab() {
         </div>
       ))}
       {(cancel.error || reorder.error) && <p role="alert" className="text-sm text-error">{errorText(cancel.error || reorder.error)}</p>}
+      <Pager page={page} pageSize={orders.data.page_size} total={orders.data.total} onPage={setPage} />
     </div>
   );
 }
 
 function RequestsTab() {
-  const requests = useMyRequests();
+  const [page, setPage] = useState(1);
+  const requests = useMyRequests(page);
   const accept = useAcceptQuote();
   if (!requests.data) return <p>{strings.shop.loading}</p>;
   return (
     <div className="flex flex-col gap-3">
-      {requests.data.length === 0 && <p className={card}>{t.noRequests}</p>}
-      {requests.data.map((r: MyRequest) => (
+      {requests.data.total === 0 && <p className={card}>{t.noRequests}</p>}
+      {requests.data.items.map((r: MyRequest) => (
         <div key={r.id} className="flex flex-wrap items-center gap-x-7 gap-y-3 rounded-[28px] bg-white px-6 py-[22px]">
           <span className="flex flex-[1_1_260px] flex-col gap-0.5">
             <span className="font-bold">
@@ -248,6 +252,7 @@ function RequestsTab() {
           )}
         </div>
       ))}
+      <Pager page={page} pageSize={requests.data.page_size} total={requests.data.total} onPage={setPage} />
       <Link to="/services" className="flex min-h-[50px] items-center gap-2 self-start rounded-full bg-ink px-6 text-[15px] font-semibold text-white no-underline">
         <icons.plus size={16} />
         {t.newRequest}

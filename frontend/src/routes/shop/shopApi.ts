@@ -90,6 +90,9 @@ export type PublicSettings = {
   };
   allow_guest_checkout: boolean;
   pickup_hold_days: number;
+  default_low_stock_alert: number;
+  closures: string[];
+  hours: Record<string, { open: string; close: string; closed: boolean }>;
   pickup_days: string[];
   returns_policy: string | null;
 };
@@ -175,4 +178,27 @@ export function useSendPayment() {
     mutationFn: ({ number, ...body }: { number: string; phone: string; method: "momo" | "airtel"; transaction_id: string }) =>
       api<PublicOrder>(`/orders/${encodeURIComponent(number)}/payment`, json("POST", body)),
   });
+}
+
+const DAY_NAMES: Record<string, string> = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+
+/** Opening hours from S8 as one line ("Mon–Fri 08:00–18:00 · Sat 09:00–14:00"), or the placeholder until set. */
+export function useOpeningHours(placeholder: string): string {
+  const settings = usePublicSettings();
+  const hours = settings.data?.hours;
+  if (!hours) return placeholder;
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  const label = (d: string) => (hours[d]?.closed ? "closed" : `${hours[d]?.open}–${hours[d]?.close}`);
+  if (days.some((d) => !hours[d]?.closed && (hours[d]?.open.startsWith("[") || hours[d]?.close.startsWith("[")))) return placeholder;
+  const groups: { from: string; to: string; text: string }[] = [];
+  for (const d of days) {
+    const text = label(d);
+    const last = groups.at(-1);
+    if (last && last.text === text) last.to = d;
+    else groups.push({ from: d, to: d, text });
+  }
+  return groups
+    .filter((g) => g.text !== "closed")
+    .map((g) => `${DAY_NAMES[g.from]}${g.from !== g.to ? `–${DAY_NAMES[g.to]}` : ""} ${g.text}`)
+    .join(" · ");
 }

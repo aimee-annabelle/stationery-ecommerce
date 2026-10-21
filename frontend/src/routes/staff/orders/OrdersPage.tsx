@@ -4,8 +4,10 @@
 import { useDeferredValue, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { icons } from "../../../components/icons";
+import { Pager } from "../../../components/Pager";
 import { formatRwf } from "../../../lib/format";
 import { useIsPhone } from "../../../lib/useMediaQuery";
+import { usePage } from "../../../lib/usePage";
 import { strings } from "../../../strings";
 import { type OrderDetail, type OrderRow, useOrder, useOrders, usePick } from "./ordersApi";
 import { AdvanceButton, CancelControl, errorText, History, placedLabel, StatusPill, VerifyBox, WhatsAppButton } from "./parts";
@@ -27,7 +29,8 @@ function DesktopOrders({ selectedId }: { selectedId?: string }) {
   const [q, setQ] = useState("");
   const query = useDeferredValue(q.trim());
   const [showNew, setShowNew] = useState(false);
-  const orders = useOrders({ status: filter || undefined, q: query || undefined });
+  const [page, setPage] = usePage(`${filter}|${query}`);
+  const orders = useOrders({ status: filter || undefined, q: query || undefined, page });
   const counts = orders.data?.counts ?? {};
   const allCount = Object.entries(counts).filter(([k]) => k !== "expired").reduce((s, [, n]) => s + n, 0);
   const select = (id: string) => navigate(`/staff/orders/${id}`);
@@ -97,6 +100,7 @@ function DesktopOrders({ selectedId }: { selectedId?: string }) {
             </tbody>
           </table>
           {orders.data?.items.length === 0 && <div className="p-10 text-center text-muted">{t.empty}</div>}
+          {orders.data && <Pager page={page} pageSize={orders.data.page_size} total={orders.data.total} onPage={setPage} />}
         </div>
         {selectedId && <DesktopPanel id={selectedId} />}
       </div>
@@ -223,7 +227,8 @@ function PickList({ order: o }: { order: OrderDetail }) {
 
 function MobileOrderList() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("");
-  const orders = useOrders({ status: filter || "open" });
+  const [page, setPage] = usePage(filter);
+  const orders = useOrders({ status: filter || "open", page });
   return (
     <div className="flex flex-col gap-3 pt-6">
       <div className="flex items-center justify-between">
@@ -247,6 +252,7 @@ function MobileOrderList() {
         ))}
       </div>
       <OrderCards rows={orders.data?.items ?? []} />
+      {orders.data && <Pager page={page} pageSize={orders.data.page_size} total={orders.data.total} onPage={setPage} />}
     </div>
   );
 }

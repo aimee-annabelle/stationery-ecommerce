@@ -4,6 +4,7 @@ import { useState } from "react";
 import { icons } from "../../../components/icons";
 import { useStaffSession } from "../../../lib/staffSession";
 import { strings } from "../../../strings";
+import { usePublicSettings } from "../../shop/shopApi";
 import { type ProductInput, useAddPhoto, useCreateProduct } from "./catalogApi";
 import { CategorySelect, errorText, toInt } from "./parts";
 
@@ -13,6 +14,7 @@ export function AddProductPanel({ onClose, onCreated }: { onClose: () => void; o
   const { can } = useStaffSession();
   const create = useCreateProduct();
   const addPhoto = useAddPhoto();
+  const settings = usePublicSettings();
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -43,7 +45,8 @@ export function AddProductPanel({ onClose, onCreated }: { onClose: () => void; o
       cost_rwf: toInt(form.cost),
       sku: form.sku,
       opening_stock: toInt(form.opening) ?? 0,
-      low_stock_alert: toInt(form.alert) ?? 0,
+      // Empty means the S8 default.
+      low_stock_alert: toInt(form.alert) ?? settings.data?.default_low_stock_alert ?? 0,
       description: form.description,
       location: form.location || null,
       is_visible: isVisible,
@@ -106,7 +109,7 @@ export function AddProductPanel({ onClose, onCreated }: { onClose: () => void; o
           )}
           <label className="field">
             {f.alert}
-            <input type="number" min={0} inputMode="numeric" placeholder={f.alertPlaceholder} value={form.alert} onChange={set("alert")} />
+            <input type="number" min={0} inputMode="numeric" placeholder={settings.data ? String(settings.data.default_low_stock_alert) : f.alertPlaceholder} value={form.alert} onChange={set("alert")} />
           </label>
           <label className="field">
             {f.sku}

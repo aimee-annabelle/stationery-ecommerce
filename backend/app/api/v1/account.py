@@ -7,7 +7,7 @@ import uuid
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from pydantic import BaseModel
 from app.api.deps import DB, CurrentCustomer, SessionId
 from app.api.v1.shop import _order_out, quote_bag
@@ -44,6 +44,24 @@ class MyRequestRow(BaseModel):
     needed_by: date | None
     quote_rwf: int | None
     ready_on: date | None
+
+
+class MyOrderPage(BaseModel):
+    items: list[MyOrderRow]
+    total: int
+    page: int
+    page_size: int
+
+
+class MyRequestPage(BaseModel):
+    items: list[MyRequestRow]
+    total: int
+    page: int
+    page_size: int
+
+
+Page = Annotated[int, Query(ge=1)]
+PageSize = Annotated[int, Query(ge=1, le=50)]
 
 
 class BuyAgainRow(BaseModel):
@@ -109,12 +127,8 @@ def change_password(body: PasswordIn, db: DB, customer: CurrentCustomer, session
 
 @router.get("/me/overview", response_model=Overview)
 def overview(db: DB, customer: CurrentCustomer) -> Overview:
-    mine = customer_account.my_orders(db, customer)
-    current = next((o for o in mine if o.status in ("new", "preparing", "ready")), None)
-    requests = customer_account.my_requests(db, customer)
-    quote = next((r for r in requests if r.status == "quoted"), None) or next(
-        (r for r in requests if r.status in ("new", "in_progress", "ready")), None
-    )
+    current = customer_account.current_order(db, customer)
+    quote = customer_account.open_quote(db, customer)
     again = []
     for item, order in customer_account.buy_again(db, customer):
         product = db.get(Product, item.product_id)
@@ -135,9 +149,10 @@ def overview(db: DB, customer: CurrentCustomer) -> Overview:
     )
 
 
-@router.get("/me/orders", response_model=list[MyOrderRow])
-def my_orders(db: DB, customer: CurrentCustomer) -> list[MyOrderRow]:
-    return [_order_row(db, o) for o in customer_account.my_orders(db, customer)]
+@router.get("/me/orders", response_model=MyOrderPage)
+def my_orders(db: DB, customer: CurrentCustomer, page: Page = 1, page_size: PageSize = 10) -> MyOrderPage:
+    rows, total = customer_account.my_orders(db, customer, page, page_size)
+    return MyOrderPage(items=[_order_row(db, o) for o in rows], total=total, page=page, page_size=page_size)
 
 
 @router.get("/me/orders/{order_id}", response_model=PublicOrderOut)
@@ -161,9 +176,10 @@ def reorder(order_id: uuid.UUID, db: DB, customer: CurrentCustomer) -> BagOut:
     return _cart_out(db, customer)
 
 
-@router.get("/me/print-requests", response_model=list[MyRequestRow])
-def my_requests(db: DB, customer: CurrentCustomer) -> list[MyRequestRow]:
-    return [_request_row(r) for r in customer_account.my_requests(db, customer)]
+@router.get("/me/print-requests", response_model=MyRequestPage)
+def my_requests(db: DB, customer: CurrentCustomer, page: Page = 1, page_size: PageSize = 10) -> MyRequestPage:
+    rows, total = customer_account.my_requests(db, customer, page, page_size)
+    return MyRequestPage(items=[_request_row(r) for r in rows], total=total, page=page, page_size=page_size)
 
 
 @router.post("/me/print-requests/{request_id}/accept-quote", response_model=MyRequestRow)

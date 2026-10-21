@@ -135,3 +135,13 @@ def storage(tmp_path, client):
 def headers(client: TestClient, team: dict[str, Staff]) -> dict[str, dict[str, str]]:
     """Authorization headers for a signed-in owner, manager and worker."""
     return {role: bearer(staff_token(client, member)) for role, member in team.items()}
+
+
+@pytest.fixture
+def outbox_mail(monkeypatch, notifier):
+    """Emails queued with app.services.outbox, sent at once (no thread) to the recording notifier."""
+    from app.services import outbox
+
+    monkeypatch.setattr(outbox, "notifier_factory", lambda: notifier)
+    monkeypatch.setattr(outbox, "run", lambda job: job())
+    return notifier

@@ -18,7 +18,13 @@ const NAV: { to: string; label: string; icon: keyof typeof icons; capability?: C
   { to: "/staff/settings", label: t.nav.settings, icon: "gear", capability: "settings.manage" },
 ];
 
-// Bottom tab bar from the M1-M6 designs.
+// Bottom tab bar from the M1-M5 designs; the owner's from M6.
+const OWNER_TABS: { to: string; label: string; icon: keyof typeof icons; end?: boolean }[] = [
+  { to: "/staff", label: strings.pocket.tabs.home, icon: "home", end: true },
+  { to: "/staff/reports", label: strings.pocket.tabs.reports, icon: "chart" },
+  { to: "/staff/team", label: strings.pocket.tabs.staff, icon: "users" },
+  { to: "/staff/settings", label: strings.pocket.tabs.settings, icon: "gear" },
+];
 const TABS: { to: string; label: string; icon: keyof typeof icons; end?: boolean }[] = [
   { to: "/staff", label: t.tabs.home, icon: "home", end: true },
   { to: "/staff/sale", label: t.tabs.sale, icon: "bag" },
@@ -108,7 +114,7 @@ export function StaffLayout() {
         className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-[#E4E0D6] bg-white px-2 pt-1.5 pb-[max(16px,env(safe-area-inset-bottom))] md:hidden"
         aria-label="Main"
       >
-        {TABS.map((tab) => {
+        {(staff.role === "owner" ? OWNER_TABS : TABS).map((tab) => {
           const Icon = icons[tab.icon];
           return (
             <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabLink}>

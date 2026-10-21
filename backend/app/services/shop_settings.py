@@ -59,6 +59,8 @@ def public(db: Session) -> dict[str, Any]:
         },
         "allow_guest_checkout": bool(get(db, "orders", {}).get("allow_guest_checkout", True)),
         "pickup_hold_days": get(db, "orders", {}).get("pickup_hold_days", 3),
+        "default_low_stock_alert": get(db, "orders", {}).get("default_low_stock_alert", 5),
+        "closures": get(db, "closures", []),
         "pickup_days": [d.isoformat() for d in pickup_days(db)],
         "returns_policy": get(db, "receipt", {}).get("returns_policy"),
     }

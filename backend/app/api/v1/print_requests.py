@@ -152,8 +152,9 @@ async def create_request(
 
 @router.get("/staff/print-requests", response_model=RequestBoard)
 def board(db: DB, staff: Manager, status_filter: Annotated[str | None, Query(alias="status")] = None,
-          q: Annotated[str | None, Query(max_length=80)] = None) -> RequestBoard:
-    rows = print_requests.list_requests(db, status=status_filter, q=q)
+          q: Annotated[str | None, Query(max_length=80)] = None,
+          collected_limit: Annotated[int, Query(ge=1, le=500)] = 20) -> RequestBoard:
+    rows = print_requests.list_requests(db, status=status_filter, q=q, collected_limit=collected_limit)
     names = staff_names(db, {r.assigned_staff_id for r in rows})
     team = [{"id": s.id, "name": s.name, "role": s.role}
             for s in db.query(Staff).filter(Staff.is_active.is_(True)).order_by(Staff.name)]

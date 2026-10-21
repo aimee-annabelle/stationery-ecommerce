@@ -174,7 +174,6 @@
   font-weight: 600;
 }
 .field input,
-.field select,
 .field textarea {
   min-height: 46px;
   border: 1px solid #dcd8ce;
@@ -217,7 +216,6 @@
   flex-wrap: wrap;
 }
 input:focus,
-select:focus,
 textarea:focus,
 button:focus-visible,
 a:focus-visible {
@@ -408,12 +406,3 @@ a:focus-visible {
   color: var(--muted);
 }
 
-.pager {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 4px;
-  font-size: 14px;
-  color: var(--muted);
-}

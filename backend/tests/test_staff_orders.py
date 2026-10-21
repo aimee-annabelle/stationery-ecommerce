@@ -293,7 +293,7 @@ def test_walk_in_receipt_without_phone(client, seeded, headers):
 
 
 @pytest.mark.parametrize("role, sections", [
-    ("owner", {"kpis", "sales_7d", "low_stock", "queue", "activity", "on_shift"}),
+    ("owner", {"kpis", "sales_7d", "low_stock", "queue", "activity", "on_shift", "pocket"}),
     ("manager", {"kpis", "restock", "moves", "queue"}),
     ("worker", {"kpis", "queue"}),
 ])

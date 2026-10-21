@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { formatDateTime, formatRwf } from "../../../lib/format";
 import { strings } from "../../../strings";
+import { Pager } from "../../../components/Pager";
+import { Select } from "../../../components/Select";
 import {
   type Movement,
   type Product,
@@ -52,16 +54,7 @@ export function StockBar({ product }: { product: Product }) {
 export function CategorySelect({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   const categories = useCategories();
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} required>
-      <option value="" disabled>
-        —
-      </option>
-      {categories.data?.map((c) => (
-        <option key={c.id} value={c.id}>
-          {c.name}
-        </option>
-      ))}
-    </select>
+    <Select value={value} onChange={onChange} required options={(categories.data ?? []).map((c) => ({ value: c.id, label: c.name }))} />
   );
 }
 
@@ -110,38 +103,27 @@ export function ReceivePanel({ fixedProduct, onDone }: { fixedProduct?: Product;
         {!fixedProduct && (
           <label className="field" style={{ flex: "2 1 240px" }}>
             {r.product}
-            <select
+            <Select
               value={productId}
-              onChange={(e) => {
-                setProductId(e.target.value);
+              onChange={(id) => {
+                setProductId(id);
                 setVariantId("");
               }}
               required
-            >
-              <option value="" disabled>
-                —
-              </option>
-              {all.data?.items.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              options={(all.data?.items ?? []).map((p) => ({ value: p.id, label: p.name }))}
+            />
           </label>
         )}
         {product && product.variants.length > 0 && (
           <label className="field" style={{ flex: "1 1 160px" }}>
             {r.option}
-            <select value={variantId} onChange={(e) => setVariantId(e.target.value)} required>
-              <option value="" disabled>
-                {r.chooseOption}
-              </option>
-              {product.variants.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={variantId}
+              onChange={setVariantId}
+              required
+              placeholder={r.chooseOption}
+              options={product.variants.map((v) => ({ value: v.id, label: v.name }))}
+            />
           </label>
         )}
         <label className="field" style={{ flex: "1 1 120px" }}>
@@ -215,33 +197,6 @@ export function MovementsTable({ productId, showCost }: { productId?: string; sh
         </tbody>
       </table>
       <Pager page={page} pageSize={data.page_size} total={data.total} onPage={setPage} />
-    </div>
-  );
-}
-
-export function Pager({
-  page,
-  pageSize,
-  total,
-  onPage,
-}: {
-  page: number;
-  pageSize: number;
-  total: number;
-  onPage: (page: number) => void;
-}) {
-  if (total <= pageSize) return null;
-  const from = (page - 1) * pageSize + 1;
-  const to = Math.min(total, page * pageSize);
-  return (
-    <div className="pager">
-      <button className="btn btn-quiet btn-small" type="button" disabled={page === 1} onClick={() => onPage(page - 1)}>
-        {t.previous}
-      </button>
-      <span>{t.page(from, to, total)}</span>
-      <button className="btn btn-quiet btn-small" type="button" disabled={to >= total} onClick={() => onPage(page + 1)}>
-        {t.next}
-      </button>
     </div>
   );
 }

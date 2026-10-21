@@ -5,6 +5,7 @@ import { useState } from "react";
 import { icons } from "../../components/icons";
 import { api, ApiError } from "../../lib/api";
 import { strings } from "../../strings";
+import { useOpeningHours } from "./shopApi";
 
 const t = strings.contact;
 const input = (invalid = false) =>
@@ -19,6 +20,7 @@ export function ContactPage() {
   const send = useMutation({
     mutationFn: () => api("/contact", { method: "POST", body: JSON.stringify({ name: name.trim(), phone, message: message.trim() }) }),
   });
+  const hours = useOpeningHours(strings.shop.hours);
   const nameOk = name.trim().length > 1;
   const phoneOk = phone.replace(/\D/g, "").length >= 9;
 
@@ -33,7 +35,7 @@ export function ContactPage() {
             {[
               [<icons.pin size={20} />, t.visit, strings.shop.address, null],
               [<icons.phone size={20} />, t.call, strings.shop.phone, strings.shop.phoneHref],
-              [<icons.clock size={20} />, t.hours, strings.shop.hours, null],
+              [<icons.clock size={20} />, t.hours, hours, null],
             ].map(([icon, label, value, href]) => (
               <div key={label as string} className="flex items-center gap-4 rounded-3xl bg-white p-5">
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sage">{icon}</span>

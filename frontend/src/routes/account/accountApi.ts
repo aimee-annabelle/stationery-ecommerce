@@ -1,6 +1,6 @@
 // C1 My account API: types mirror app/api/v1/account.py.
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Customer, customerApi } from "../../lib/customerSession";
 import { bag } from "../shop/bag";
 import type { BagQuote, PublicOrder, Tint } from "../shop/shopApi";
@@ -49,8 +49,12 @@ export type Overview = {
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) });
 
 export const useOverview = () => useQuery({ queryKey: ["me", "overview"], queryFn: () => customerApi<Overview>("/me/overview") });
-export const useMyOrders = () => useQuery({ queryKey: ["me", "orders"], queryFn: () => customerApi<MyOrder[]>("/me/orders") });
-export const useMyRequests = () => useQuery({ queryKey: ["me", "requests"], queryFn: () => customerApi<MyRequest[]>("/me/print-requests") });
+export type Page<T> = { items: T[]; total: number; page: number; page_size: number };
+
+export const useMyOrders = (page: number) =>
+  useQuery({ queryKey: ["me", "orders", page], queryFn: () => customerApi<Page<MyOrder>>(`/me/orders?page=${page}`), placeholderData: keepPreviousData });
+export const useMyRequests = (page: number) =>
+  useQuery({ queryKey: ["me", "requests", page], queryFn: () => customerApi<Page<MyRequest>>(`/me/print-requests?page=${page}`), placeholderData: keepPreviousData });
 
 function useMeMutation<TArgs, TOut>(request: (args: TArgs) => Promise<TOut>, onDone?: (out: TOut) => void) {
   const client = useQueryClient();
