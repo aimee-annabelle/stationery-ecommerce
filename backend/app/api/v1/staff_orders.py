@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from app.api.deps import DB, AnyStaff, Context, require
 from app.core.permissions import Capability
-from app.models import Order, OrderItem, OrderStatusHistory, Product, Staff
+from app.models import Customer, Order, OrderItem, OrderStatusHistory, Product, Staff
 from app.schemas.staff_orders import (
     AdvanceIn,
     CancelIn,
@@ -101,6 +101,7 @@ def _detail(db: DB, order: Order) -> OrderDetail:
                             who=names.get(h.staff_id, customer) if h.staff_id else customer, at=h.at)
                  for h in history],
         hold_days=staff_orders.hold_days(db),
+        prefers_call=bool(order.customer_id and not db.get(Customer, order.customer_id).whatsapp_updates),
     )
 
 

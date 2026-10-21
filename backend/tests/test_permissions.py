@@ -89,6 +89,16 @@ ROUTE_CAPABILITIES = {
     ("POST", "/api/v1/staff/orders/{order_id}/cancel"): C.ORDERS_CANCEL,
     ("POST", "/api/v1/staff/orders/{order_id}/whatsapp-link"): C.ORDERS_UPDATE_STATUS,
     ("GET", "/api/v1/staff/orders/{order_id}/receipt"): C.ORDERS_UPDATE_STATUS,
+    ("GET", "/api/v1/staff/print-requests"): C.PRINT_REQUESTS_MANAGE,
+    ("GET", "/api/v1/staff/print-requests/{request_id}"): C.PRINT_REQUESTS_MANAGE,
+    ("POST", "/api/v1/staff/print-requests"): C.PRINT_REQUESTS_MANAGE,
+    ("POST", "/api/v1/staff/print-requests/{request_id}/quote"): C.PRINT_REQUESTS_MANAGE,
+    ("POST", "/api/v1/staff/print-requests/{request_id}/status"): C.PRINT_REQUESTS_MANAGE,
+    ("PATCH", "/api/v1/staff/print-requests/{request_id}"): C.PRINT_REQUESTS_MANAGE,
+    ("POST", "/api/v1/staff/print-requests/{request_id}/whatsapp-link"): C.PRINT_REQUESTS_MANAGE,
+    ("GET", "/api/v1/staff/print-requests/{request_id}/files/{file_id}"): C.PRINT_REQUESTS_MANAGE,
+    ("GET", "/api/v1/staff/contact-messages"): None,
+    ("POST", "/api/v1/staff/contact-messages/{message_id}/handled"): None,
 }
 
 

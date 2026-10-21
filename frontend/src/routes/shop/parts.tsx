@@ -3,6 +3,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { icons } from "../../components/icons";
 import { formatRwf } from "../../lib/format";
+import { useCustomerSession } from "../../lib/customerSession";
 import { strings } from "../../strings";
 import { bag, bagUnits, useBag } from "./bag";
 import type { Availability, ProductCard as Card, Tint } from "./shopApi";
@@ -58,6 +59,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 export function ShopHeader() {
   const navigate = useNavigate();
   const units = bagUnits(useBag());
+  const { customer } = useCustomerSession();
   return (
     <header className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-3 gap-y-3 px-4 py-[22px] sm:gap-x-8 sm:px-6">
       <Link to="/" className="font-heading text-[28px] font-bold no-underline">
@@ -101,18 +103,31 @@ export function ShopHeader() {
             </span>
           )}
         </Link>
-        <Link
-          to="/login"
-          className="hidden min-h-[46px] items-center rounded-full border border-line bg-white px-[22px] text-[15px] font-semibold no-underline sm:flex"
-        >
-          {t.logIn}
-        </Link>
-        <Link
-          to="/signup"
-          className="flex min-h-[46px] items-center rounded-full bg-ink px-4 text-[15px] font-semibold text-white no-underline sm:px-6"
-        >
-          {t.signUp}
-        </Link>
+        {customer ? (
+          <Link
+            to="/account"
+            aria-label={t.myAccount}
+            className="flex min-h-[46px] min-w-[46px] items-center justify-center gap-2 rounded-full bg-ink px-3 text-[15px] font-semibold text-white no-underline sm:px-6"
+          >
+            <icons.users size={18} />
+            <span className="hidden sm:inline">{t.myAccount}</span>
+          </Link>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="hidden min-h-[46px] items-center rounded-full border border-line bg-white px-[22px] text-[15px] font-semibold no-underline sm:flex"
+            >
+              {t.logIn}
+            </Link>
+            <Link
+              to="/signup"
+              className="flex min-h-[46px] items-center rounded-full bg-ink px-4 text-[15px] font-semibold text-white no-underline sm:px-6"
+            >
+              {t.signUp}
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );

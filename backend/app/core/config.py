@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     upload_dir: str = "uploads"
     max_image_bytes: int = 5 * 1024 * 1024
     max_product_images: int = 8
+    max_request_file_bytes: int = 20 * 1024 * 1024
+    max_request_files: int = 3
 
     seed_staff_password: str = "pahyems-dev-2026"
 

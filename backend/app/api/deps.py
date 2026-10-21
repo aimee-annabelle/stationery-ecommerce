@@ -78,3 +78,27 @@ def require(capability: Capability | None):
 
 
 AnyStaff = Annotated[Staff, Depends(require(None))]
+
+
+def current_session_id(credentials: Bearer) -> uuid.UUID | None:
+    """The session of the presented access token (already checked by current_customer/current_staff)."""
+    if credentials is None:
+        return None
+    try:
+        return uuid.UUID(jwt.decode(credentials.credentials, options={"verify_signature": False})["sid"])
+    except (jwt.InvalidTokenError, KeyError, ValueError):
+        return None
+
+
+def optional_customer(db: DB, credentials: Bearer) -> Customer | None:
+    """The signed-in customer, or None for a guest. A bad or expired token counts as a guest."""
+    if credentials is None:
+        return None
+    try:
+        return current_customer(db, credentials)
+    except HTTPException:
+        return None
+
+
+OptionalCustomer = Annotated[Customer | None, Depends(optional_customer)]
+SessionId = Annotated[uuid.UUID | None, Depends(current_session_id)]

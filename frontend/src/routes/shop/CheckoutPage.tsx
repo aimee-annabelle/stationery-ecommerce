@@ -1,11 +1,12 @@
 // 4 · Checkout (design/Checkout.dc.html). The order is placed first; the customer pays on the next page,
 // with the order number as the MoMo reference.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { icons } from "../../components/icons";
 import { ApiError } from "../../lib/api";
-import { formatRwf } from "../../lib/format";
+import { useCustomerSession } from "../../lib/customerSession";
+import { formatPhone, formatRwf } from "../../lib/format";
 import { strings } from "../../strings";
 import { bag, placedOrders, useBag } from "./bag";
 import { Price, ProductArt } from "./parts";
@@ -30,10 +31,19 @@ export function CheckoutPage() {
   const quote = useBagQuote(lines);
   const settings = usePublicSettings();
   const place = usePlaceOrder();
+  const { customer } = useCustomerSession();
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  // Signed-in customers start with their own details (they can still change them for this order).
+  const [name, setName] = useState(customer?.name ?? "");
+  const [phone, setPhone] = useState(customer ? formatPhone(customer.phone) : "");
+  const [email, setEmail] = useState(customer?.email ?? "");
+  useEffect(() => {
+    // The session can finish loading after the first render; fill only empty fields.
+    if (!customer) return;
+    setName((v) => v || customer.name);
+    setPhone((v) => v || formatPhone(customer.phone));
+    setEmail((v) => v || customer.email);
+  }, [customer]);
   const [dayChoice, setDayChoice] = useState<"today" | "tomorrow" | "later" | null>(null);
   const [laterDay, setLaterDay] = useState("");
   const [pay, setPay] = useState<"mobile" | "pickup" | null>(null);
@@ -115,12 +125,14 @@ export function CheckoutPage() {
       <section className="mx-auto max-w-[1240px] px-4 pt-10 pb-24 sm:px-6">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <h1 className="m-0 font-heading text-[44px] leading-none font-medium sm:text-[56px]">{t.title}</h1>
-          <span className="text-[15px] text-muted">
-            {t.haveAccount}{" "}
-            <Link to="/login" className="font-semibold underline">
-              {strings.shop.logIn}
-            </Link>
-          </span>
+          {!customer && (
+            <span className="text-[15px] text-muted">
+              {t.haveAccount}{" "}
+              <Link to="/login?next=/checkout" className="font-semibold underline">
+                {strings.shop.logIn}
+              </Link>
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-start gap-8">

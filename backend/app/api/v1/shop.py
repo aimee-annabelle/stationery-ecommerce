@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 
-from app.api.deps import DB
+from app.api.deps import DB, OptionalCustomer
 from app.core.phone import format_phone
 from app.core.ratelimit import rate_limit
 from app.models import Order
@@ -20,7 +20,7 @@ from app.schemas.shop import (
     PublicSettingsOut,
     TrackIn,
 )
-from app.services import orders, payments, shop_settings
+from app.services import customer_account, orders, payments, shop_settings
 from app.services.notifications import Notifier, get_notifier, order_confirmation_email, send_later
 
 router = APIRouter(tags=["shop"])
@@ -107,7 +107,10 @@ def _payment_steps(pay: payments.PaymentInstructions | None) -> str | None:
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(rate_limit("place_order", 10, 10 * 60))],
 )
-def place_order(body: OrderIn, db: DB, background: BackgroundTasks, notifier: NotifierDep) -> PublicOrderOut:
+def place_order(
+    body: OrderIn, db: DB, background: BackgroundTasks, notifier: NotifierDep, customer: OptionalCustomer
+) -> PublicOrderOut:
+    """Guests and signed-in customers. A customer's order is linked to their account and empties their bag."""
     order, lines = orders.place_online_order(
         db,
         lines=_requests(body),
@@ -116,7 +119,10 @@ def place_order(body: OrderIn, db: DB, background: BackgroundTasks, notifier: No
         guest_email=body.email,
         pickup_day=body.pickup_day,
         payment_method=body.payment_method,
+        customer_id=customer.id if customer else None,
     )
+    if customer is not None:
+        customer_account.set_cart(db, customer, [])
     db.commit()
     out = _order_out(db, order, include_email=True)
     if order.guest_email:

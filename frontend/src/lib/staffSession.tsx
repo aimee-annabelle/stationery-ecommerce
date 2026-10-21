@@ -67,6 +67,16 @@ export async function staffApi<T>(path: string, init: RequestInit = {}): Promise
   }
 }
 
+/** Downloads a private file (print-request uploads) with the staff token, as a Blob. */
+export async function staffDownload(path: string): Promise<Blob> {
+  const get = () =>
+    fetch(`/api/v1${path}`, { headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, credentials: "include" });
+  let res = await get();
+  if (res.status === 401 && (await refreshSession())) res = await get();
+  if (!res.ok) throw new ApiError(res.status, "Download failed");
+  return res.blob();
+}
+
 type SessionState = {
   staff: StaffMember | null;
   status: "loading" | "signedIn" | "signedOut";

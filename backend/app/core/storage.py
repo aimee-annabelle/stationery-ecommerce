@@ -17,6 +17,12 @@ class FileStorage(Protocol):
 
     def delete_url(self, url: str) -> None: ...
 
+    def save_private(self, key: str, data: bytes) -> str:
+        """Stores a file that must never be public (print-request uploads). Returns the key to keep."""
+        ...
+
+    def read_private(self, key: str) -> bytes: ...
+
 
 class LocalFileStorage:
     """Files under UPLOAD_DIR, outside the web root. app.api.v1.media serves the public ones."""
@@ -39,6 +45,17 @@ class LocalFileStorage:
     def delete_url(self, url: str) -> None:
         if url.startswith(MEDIA_PREFIX):
             self.path_for(url.removeprefix(MEDIA_PREFIX)).unlink(missing_ok=True)
+
+    def save_private(self, key: str, data: bytes) -> str:
+        if key.startswith("products/"):
+            raise ValueError("products/ is the public folder")
+        path = self.path_for(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return key
+
+    def read_private(self, key: str) -> bytes:
+        return self.path_for(key).read_bytes()
 
 
 @lru_cache

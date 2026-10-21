@@ -51,6 +51,33 @@ class ResetConfirmIn(BaseModel):
     _password = field_validator("new_password")(_check_password)
 
 
+class ResendIn(BaseModel):
+    email: EmailStr
+
+
+class ProfilePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    phone: str | None = None
+    whatsapp_updates: bool | None = None
+    marketing_opt_in: bool | None = None
+
+    @field_validator("phone")
+    @classmethod
+    def _phone(cls, value: str | None) -> str | None:
+        return normalize_phone(value) if value is not None else None
+
+
+class PasswordIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(max_length=128)
+
+    _password = field_validator("new_password")(_check_password)
+
+
 class MessageOut(BaseModel):
     message: str
 
@@ -64,6 +91,7 @@ class CustomerOut(BaseModel):
     email: str
     email_verified_at: datetime | None
     marketing_opt_in: bool
+    whatsapp_updates: bool
 
 
 class StaffOut(BaseModel):

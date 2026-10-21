@@ -90,13 +90,12 @@ def revoke(session: AuthSession) -> None:
         session.revoked_at = utcnow()
 
 
-def revoke_all(db: Session, account_type: AccountType, account_id: uuid.UUID) -> None:
+def revoke_all(db: Session, account_type: AccountType, account_id: uuid.UUID, *, except_id: uuid.UUID | None = None) -> None:
     column = AuthSession.customer_id if account_type == "customer" else AuthSession.staff_id
-    db.execute(
-        update(AuthSession)
-        .where(column == account_id, AuthSession.revoked_at.is_(None))
-        .values(revoked_at=utcnow())
-    )
+    query = update(AuthSession).where(column == account_id, AuthSession.revoked_at.is_(None))
+    if except_id is not None:
+        query = query.where(AuthSession.id != except_id)
+    db.execute(query.values(revoked_at=utcnow()))
 
 
 def has_signed_in_from(db: Session, staff_id: uuid.UUID, device: str | None) -> bool:

@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import { icons } from "../../components/icons";
 import { formatRwf } from "../../lib/format";
+import { useCustomerSession } from "../../lib/customerSession";
 import { strings } from "../../strings";
 import { bag, useBag } from "./bag";
 import { Price, ProductArt, Stepper } from "./parts";
@@ -13,6 +14,7 @@ const t = strings.shop.bag;
 export function CartPage() {
   const lines = useBag();
   const quote = useBagQuote(lines);
+  const { customer } = useCustomerSession();
   const data = lines.length ? quote.data : undefined;
 
   return (
@@ -124,13 +126,17 @@ export function CartPage() {
                 data?.can_checkout ? "" : "pointer-events-none opacity-50"
               }`}
             >
-              {t.checkoutGuest}
+              {customer ? strings.shop.checkout.title : t.checkoutGuest}
               <icons.arrowRight size={18} />
             </Link>
-            <Link to="/login" className="flex min-h-14 items-center justify-center rounded-full border-[1.5px] border-ink text-base font-semibold no-underline">
-              {t.logInCheckout}
-            </Link>
-            <p className="m-0 text-center text-[13px] leading-relaxed text-muted">{t.accountNote}</p>
+            {!customer && (
+              <>
+                <Link to="/login?next=/checkout" className="flex min-h-14 items-center justify-center rounded-full border-[1.5px] border-ink text-base font-semibold no-underline">
+                  {t.logInCheckout}
+                </Link>
+                <p className="m-0 text-center text-[13px] leading-relaxed text-muted">{t.accountNote}</p>
+              </>
+            )}
           </aside>
         </div>
       )}

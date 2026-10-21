@@ -21,6 +21,8 @@ class Customer(IdMixin, TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     marketing_opt_in: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # C1 "WhatsApp message when my order is ready". Off means staff see "Prefers a call".
+    whatsapp_updates: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
 
 
 class Staff(IdMixin, TimestampMixin, Base):

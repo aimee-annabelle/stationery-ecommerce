@@ -1,10 +1,11 @@
 // S1 · Dashboard by role (design/AdminDashboard.dc.html) and, on a phone, M1 · Worker home
 // (design/MobileHome.dc.html). The API only sends the sections the role may see.
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { icons } from "../../components/icons";
 import { formatRwf } from "../../lib/format";
-import { useStaffSession } from "../../lib/staffSession";
+import { staffApi, useStaffSession } from "../../lib/staffSession";
 import { useIsPhone } from "../../lib/useMediaQuery";
 import { strings } from "../../strings";
 import { type Dashboard, useDashboard } from "./orders/ordersApi";
@@ -100,6 +101,8 @@ function DesktopDashboard({ board }: { board: Dashboard }) {
         ))}
       </div>
 
+      <MessagesCard />
+
       {board.role === "worker" && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
           <QuickLink to="/staff/sale" dark icon={<icons.bag size={20} />} tint="bg-sage" label={t.newWalkIn} />
@@ -186,6 +189,44 @@ function DesktopDashboard({ board }: { board: Dashboard }) {
         </div>
       </div>
     </>
+  );
+}
+
+/** Contact page messages waiting for a reply (not designed; built in the dashboard card style). */
+function MessagesCard() {
+  const client = useQueryClient();
+  const messages = useQuery({
+    queryKey: ["staff", "messages"],
+    queryFn: () => staffApi<{ id: string; name: string; phone: string; message: string; created_at: string }[]>("/staff/contact-messages"),
+    refetchInterval: 60_000,
+  });
+  const handled = useMutation({
+    mutationFn: (id: string) => staffApi(`/staff/contact-messages/${id}/handled`, { method: "POST" }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["staff", "messages"] }),
+  });
+  const list = messages.data ?? [];
+  if (list.length === 0) return null;
+  const m = strings.messages;
+  return (
+    <div className="flex flex-col gap-2 rounded-3xl bg-white p-6">
+      <h2 className="m-0 font-body text-lg font-bold">
+        {m.title} <span className="ml-1 rounded-full bg-blush px-2 py-0.5 text-xs">{list.length}</span>
+      </h2>
+      {list.map((msg) => (
+        <div key={msg.id} className="flex flex-wrap items-start gap-3 border-t border-paper-staff py-3 first-of-type:border-0">
+          <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
+            <span className="text-sm font-semibold">
+              {msg.name} · <a href={`tel:+250${msg.phone.replace(/\D/g, "").slice(1)}`} aria-label={m.call(msg.name)}>{msg.phone}</a>
+              <span className="ml-2 text-xs font-normal text-muted">{clock(msg.created_at)}</span>
+            </span>
+            <span className="text-sm whitespace-pre-line text-[#3C4A42]">{msg.message}</span>
+          </span>
+          <button type="button" disabled={handled.isPending} onClick={() => handled.mutate(msg.id)} className="min-h-11 cursor-pointer rounded-full border border-line bg-white px-4 text-[13px] font-semibold">
+            {m.handled}
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -290,6 +331,7 @@ function PhoneHome({ board }: { board: Dashboard }) {
           <span className="text-[15px] font-semibold">{t.findProduct}</span>
         </Link>
       </div>
+      <MessagesCard />
       <div className="flex items-baseline justify-between">
         <h1 className="m-0 font-body text-[17px] font-bold">{strings.orders.queue}</h1>
         <span className="text-[13px] text-muted">{strings.orders.queueHint}</span>

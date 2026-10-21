@@ -42,6 +42,7 @@ export type OrderDetail = OrderRow & {
   }[];
   history: { status: OrderStatus; from_status: string | null; event: string | null; note: string | null; who: string; at: string }[];
   hold_days: number;
+  prefers_call: boolean;
 };
 
 export type Receipt = {

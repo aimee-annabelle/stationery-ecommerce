@@ -103,6 +103,7 @@ def place_online_order(
     guest_email: str | None,
     pickup_day: date,
     payment_method: str,
+    customer_id: uuid.UUID | None = None,
 ) -> tuple[Order, list[PricedLine]]:
     """A guest order from the shop. Stock is reserved straight away as "sold" movements; cancelling an
     order puts it back (stage 4)."""
@@ -127,6 +128,7 @@ def place_online_order(
     order = Order(
         source="online",
         status="new",
+        customer_id=customer_id,
         guest_name=guest_name.strip(),
         guest_phone=guest_phone,
         guest_email=(guest_email or "").strip().lower() or None,

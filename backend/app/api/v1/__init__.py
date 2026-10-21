@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from sqlalchemy import text
 
 from app.api.deps import DB
-from app.api.v1 import auth, catalog, shop, staff_auth, staff_catalog, staff_orders
+from app.api.v1 import account, auth, catalog, print_requests, shop, staff_auth, staff_catalog, staff_orders
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(auth.router)
@@ -11,6 +11,8 @@ router.include_router(catalog.router)
 router.include_router(shop.router)
 router.include_router(staff_catalog.router)
 router.include_router(staff_orders.router)
+router.include_router(account.router)
+router.include_router(print_requests.router)
 
 
 @router.get("/health", tags=["health"])

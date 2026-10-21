@@ -86,8 +86,9 @@ SETTINGS: dict[str, object] = {
             "Call 0786 125 023 with questions."
         ),
         "payment_rejected": "We couldn't confirm payment for {order}. [PAYMENT REJECTED MESSAGE]",
-        "print_quote": "Your quote for {details} is {total} RWF. [PRINT QUOTE MESSAGE]",
-        "print_ready": "[PRINT REQUEST READY MESSAGE]",
+        # From design/MobileRequests.dc.html.
+        "print_quote": "Hello {name}, your quote for {details} is {total}. Ready on {ready_on}. Reply YES or call 0786 125 023.",
+        "print_ready": "Hello {name}, your Pahyems request {order} is ready. Collect it at Huye – Tumba Center.",
         # From design/AdminOrders.dc.html.
         "general": "Hello {name}, this is Pahyems about your order {order}.",
         "receipt": "Pahyems receipt {order}\n{items}\nTotal {total}\n{footer}",

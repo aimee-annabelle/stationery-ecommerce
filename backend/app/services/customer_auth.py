@@ -93,6 +93,15 @@ def signup(
     return customer, _issue_code(db, email, "signup")
 
 
+def resend_signup_code(db: Session, *, email: str) -> str | None:
+    """A new code for an account that isn't verified yet, or None (callers answer the same way)."""
+    email = normalize_email(email)
+    customer = db.scalar(select(Customer).where(Customer.email == email))
+    if customer is None or customer.email_verified_at is not None:
+        return None
+    return _issue_code(db, email, "signup")
+
+
 def verify_signup(db: Session, *, email: str, code: str, context: RequestContext) -> tuple[Customer, IssuedTokens]:
     email = normalize_email(email)
     _use_code(db, email, "signup", code)

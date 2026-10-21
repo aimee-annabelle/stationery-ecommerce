@@ -68,6 +68,7 @@ class OrderDetail(OrderRow):
     line_items: list[OrderItemRow]
     history: list[HistoryRow]
     hold_days: int
+    prefers_call: bool  # the customer turned off WhatsApp updates in C1
 
 
 class WalkInIn(Strict):

@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { customerToken } from "../../lib/customerSession";
 import type { BagLine } from "./bag";
 
 export type Tint = "butter" | "lilac" | "blush" | "sage";
@@ -158,7 +159,7 @@ export function usePlaceOrder() {
       payment_method: PaymentMethod;
     }) => {
       const { lines, ...rest } = body;
-      return api<PublicOrder>("/orders", json("POST", { items: toItems(lines), ...rest }));
+      return api<PublicOrder>("/orders", json("POST", { items: toItems(lines), ...rest }), customerToken());
     },
   });
 }

@@ -8,6 +8,7 @@ export type BagLine = { productId: string; variantId: string | null; qty: number
 const KEY = "pahyems.bag.v1";
 const ORDER_KEY = (number: string) => `pahyems.order.${number}`;
 const listeners = new Set<() => void>();
+const changeListeners = new Set<(lines: BagLine[]) => void>();
 let lines: BagLine[] = read();
 
 function read(): BagLine[] {
@@ -21,7 +22,7 @@ function read(): BagLine[] {
   }
 }
 
-function write(next: BagLine[]) {
+function write(next: BagLine[], { silent = false } = {}) {
   lines = next;
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
@@ -29,6 +30,13 @@ function write(next: BagLine[]) {
     // Private windows can refuse storage; the bag still works until the tab closes.
   }
   listeners.forEach((listener) => listener());
+  if (!silent) changeListeners.forEach((listener) => listener(next));
+}
+
+/** Changes made in this tab (used to save a signed-in customer's bag to the server). */
+export function onBagChange(listener: (lines: BagLine[]) => void): () => void {
+  changeListeners.add(listener);
+  return () => changeListeners.delete(listener);
 }
 
 // Another tab changed the bag.
@@ -60,6 +68,13 @@ export const bag = {
   },
   clear() {
     write([]);
+  },
+  snapshot(): BagLine[] {
+    return lines.map((l) => ({ ...l }));
+  },
+  /** Replaces the whole bag, for example with the account's bag after signing in. */
+  replace(next: BagLine[], options: { silent?: boolean } = {}) {
+    write(next, options);
   },
 };
 

@@ -107,6 +107,15 @@ export function VerifyBox({ order }: { order: OrderDetail }) {
 export function WhatsAppButton({ order, className = "" }: { order: OrderDetail; className?: string }) {
   const whatsapp = useWhatsApp();
   if (!order.phone || order.status === "cancelled") return null;
+  if (order.prefers_call) {
+    // The customer turned off WhatsApp updates in their account.
+    return (
+      <a href={`tel:+250${order.phone.replace(/\D/g, "").slice(1)}`} className={`flex min-h-12 items-center justify-center gap-2 rounded-full bg-sage text-sm font-semibold no-underline ${className}`}>
+        <icons.phone size={16} />
+        {t.prefersCall}
+      </a>
+    );
+  }
   const [template, label] =
     order.status === "ready"
       ? (["ready", t.whatsappReady] as const)

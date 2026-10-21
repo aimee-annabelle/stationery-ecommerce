@@ -2,12 +2,17 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 import { ShopLayout } from "./layouts/ShopLayout";
 import { StaffLayout } from "./layouts/StaffLayout";
 import { StaffSessionProvider } from "./lib/staffSession";
+import { AccountPage } from "./routes/account/AccountPage";
+import { LoginPage } from "./routes/account/LoginPage";
+import { SignupPage } from "./routes/account/SignupPage";
 import { NotFound } from "./routes/NotFound";
+import { ContactPage } from "./routes/shop/ContactPage";
+import { ServicesPage } from "./routes/shop/ServicesPage";
+import { RequestsPage } from "./routes/staff/requests/RequestsPage";
 import { CartPage } from "./routes/shop/CartPage";
 import { CheckoutPage } from "./routes/shop/CheckoutPage";
 import { HomePage } from "./routes/shop/HomePage";
 import { OrderConfirmedPage, TrackPage } from "./routes/shop/OrderPages";
-import { ShopPlaceholder } from "./routes/shop/Placeholder";
 import { ProductPage } from "./routes/shop/ProductPage";
 import { ShopPage } from "./routes/shop/ShopPage";
 import { ComingSoon, RequireCapability } from "./routes/staff/guards";
@@ -34,17 +39,17 @@ export const router = createBrowserRouter([
       { path: "/cart", element: <CartPage /> },
       { path: "/orders/:number/confirmed", element: <OrderConfirmedPage /> },
       { path: "/track", element: <TrackPage /> },
-      // Stage 5 pages.
-      { path: "/services", element: <ShopPlaceholder title={strings.shop.nav.services} stage={5} /> },
-      { path: "/contact", element: <ShopPlaceholder title={strings.shop.nav.contact} stage={5} /> },
-      { path: "/login", element: <ShopPlaceholder title={strings.shop.logIn} stage={5} /> },
-      { path: "/signup", element: <ShopPlaceholder title={strings.shop.signUp} stage={5} /> },
-      { path: "/account", element: <ShopPlaceholder title={strings.shop.logIn} stage={5} /> },
+      { path: "/services", element: <ServicesPage /> },
+      { path: "/contact", element: <ContactPage /> },
+      { path: "/account", element: <AccountPage /> },
       { path: "*", element: <NotFound /> },
     ],
   },
-  // Checkout has its own slim header (design/Checkout.dc.html).
+  // Checkout has its own slim header (design/Checkout.dc.html); log-in and sign-up use the arch layout.
   { path: "/checkout", element: <CheckoutPage /> },
+  { path: "/login", element: <LoginPage /> },
+  { path: "/reset", element: <LoginPage startWith="forgot" /> },
+  { path: "/signup", element: <SignupPage /> },
   {
     path: "/staff",
     element: (
@@ -63,7 +68,8 @@ export const router = createBrowserRouter([
           { path: "orders", element: <OrdersPage /> },
           { path: "orders/:orderId", element: <OrdersPage /> },
           { path: "sale", element: <SalePage /> },
-          { path: "requests", element: <ComingSoon title={nav.requests} stage={5} /> },
+          { path: "requests", element: <RequestsPage /> },
+          { path: "requests/:requestId", element: <RequestsPage /> },
           {
             path: "products",
             element: (
