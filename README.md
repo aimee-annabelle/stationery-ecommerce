@@ -42,10 +42,12 @@ The API applies migrations when it starts.
 - `backend/app/core/permissions.py`: staff capabilities mapped to roles. Every staff route uses `require(Capability...)`.
 - `backend/app/services/audit.py`: the activity log. Every staff change calls `audit.record(...)` before the commit.
 - `backend/app/services/notifications.py`: the `Notifier` interface for emails.
+- `backend/app/services/stock.py`: every stock change goes through `record_movement`, which also keeps variant stock in sync.
 - `backend/app/seed.py`: sample data from the designs. Anything in `[SQUARE BRACKETS]` is waiting for the owner.
-- `frontend/src/styles/tokens.css`: design tokens. `frontend/src/strings.ts`: all UI text.
+- `frontend/src/styles/tokens.css`: design tokens as a Tailwind v4 theme (`bg-ink`, `text-muted`, `font-heading`…). New styling uses Tailwind classes. `frontend/src/strings.ts`: all UI text.
 
 ## Build progress
 
 1. Foundation: done.
-2. Catalog and stock: next.
+2. Catalog and stock: done. Staff log in at http://localhost:5173/staff/login.
+3. Shop and checkout: next.

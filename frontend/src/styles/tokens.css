@@ -1,32 +1,47 @@
 /* Design tokens for option D, "Paper Studio Editorial" (HANDOFF.md, "Design tokens"). */
-:root {
-  --ink: #22302a;
-  --paper: #f7f5f0;
-  --paper-staff: #f2efe8;
-  --white: #ffffff;
-  --muted: #55625a;
+@import "tailwindcss";
 
-  --sage: #dce8df;
-  --butter: #f7e7b4;
-  --lilac: #e4ddf3;
-  --blush: #f6dcd3;
-  --terracotta: #c0573e;
-  --error: #a8462f;
+/* Tailwind theme: utilities such as bg-ink, text-muted, bg-sage, font-heading, rounded-card. */
+@theme {
+  --color-ink: #22302a;
+  --color-paper: #f7f5f0;
+  --color-paper-staff: #f2efe8;
+  --color-muted: #55625a;
+  --color-line: #dcd8ce;
 
-  /* Category tints */
-  --tint-school: var(--butter);
-  --tint-office: var(--lilac);
-  --tint-electronics: var(--blush);
-  --tint-phone: var(--sage);
+  --color-sage: #dce8df;
+  --color-butter: #f7e7b4;
+  --color-lilac: #e4ddf3;
+  --color-blush: #f6dcd3;
+  --color-terracotta: #c0573e;
+  --color-error: #a8462f;
 
   --font-heading: "Playfair Display", Georgia, serif;
   --font-body: Inter, system-ui, sans-serif;
+  --font-sans: Inter, system-ui, sans-serif;
 
-  --radius-pill: 999px;
   --radius-card-sm: 20px;
   --radius-card: 30px;
   --radius-card-lg: 40px;
+}
 
+/* The same tokens under their earlier names, used by the stylesheets written before Tailwind.
+   Screens move to Tailwind classes as they are next changed. */
+:root {
+  --ink: var(--color-ink);
+  --paper: var(--color-paper);
+  --paper-staff: var(--color-paper-staff);
+  --white: #ffffff;
+  --muted: var(--color-muted);
+
+  --sage: var(--color-sage);
+  --butter: var(--color-butter);
+  --lilac: var(--color-lilac);
+  --blush: var(--color-blush);
+  --terracotta: var(--color-terracotta);
+  --error: var(--color-error);
+
+  --radius-pill: 999px;
   --touch-target: 44px;
   --page-gutter: 16px;
 }

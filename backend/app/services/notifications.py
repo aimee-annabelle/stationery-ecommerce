@@ -91,3 +91,12 @@ def reset_code_email(to: str, code: str) -> Email:
         "Reset your Pahyems password",
         f"Your reset code is {code}\n\nIt works for 15 minutes. If you didn't ask for this, ignore this email.",
     )
+
+
+def low_stock_email(to: str, *, product_name: str, sku: str, stock_qty: int, alert: int, flagged_by: str) -> Email:
+    return Email(
+        to,
+        f"Running low: {product_name}",
+        f"{flagged_by} says {product_name} (SKU {sku}) is running low.\n\n"
+        f"In stock: {stock_qty}. Alert level: {alert}.",
+    )

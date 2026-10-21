@@ -57,6 +57,42 @@ def test_every_staff_route_declares_a_guard():
     assert missing == [], "Staff routes without require(...): " + ", ".join(missing)
 
 
+# Every staff route and the capability it must require (None = any signed-in staff member).
+# A new staff route fails test_staff_routes_require_the_right_capability until it is added here.
+ROUTE_CAPABILITIES = {
+    ("GET", "/api/v1/staff/me"): None,
+    ("GET", "/api/v1/staff/products"): C.PRODUCTS_VIEW,
+    ("GET", "/api/v1/staff/products/{product_id}"): C.PRODUCTS_VIEW,
+    ("POST", "/api/v1/staff/products"): C.PRODUCTS_EDIT,
+    ("PATCH", "/api/v1/staff/products/{product_id}"): C.PRODUCTS_EDIT,
+    ("POST", "/api/v1/staff/products/{product_id}/low-stock-flag"): C.PRODUCTS_VIEW,
+    ("POST", "/api/v1/staff/products/{product_id}/variants"): C.PRODUCTS_EDIT,
+    ("PATCH", "/api/v1/staff/products/{product_id}/variants/{variant_id}"): C.PRODUCTS_EDIT,
+    ("DELETE", "/api/v1/staff/products/{product_id}/variants/{variant_id}"): C.PRODUCTS_EDIT,
+    ("POST", "/api/v1/staff/products/{product_id}/images"): C.PRODUCTS_EDIT,
+    ("DELETE", "/api/v1/staff/products/{product_id}/images/{image_id}"): C.PRODUCTS_EDIT,
+    ("PUT", "/api/v1/staff/products/{product_id}/images/order"): C.PRODUCTS_EDIT,
+    ("POST", "/api/v1/staff/stock/receive"): C.STOCK_MANAGE,
+    ("POST", "/api/v1/staff/stock/adjust"): C.STOCK_MANAGE,
+    ("GET", "/api/v1/staff/stock/movements"): C.PRODUCTS_VIEW,
+    ("GET", "/api/v1/staff/categories"): C.PRODUCTS_VIEW,
+    ("POST", "/api/v1/staff/categories"): C.PRODUCTS_EDIT,
+    ("PATCH", "/api/v1/staff/categories/{category_id}"): C.PRODUCTS_EDIT,
+    ("DELETE", "/api/v1/staff/categories/{category_id}"): C.PRODUCTS_EDIT,
+}
+
+
+def test_staff_routes_require_the_right_capability():
+    """With test_each_role_against_each_capability, this covers each role against each staff route."""
+    actual = {}
+    for route in app.routes:
+        if isinstance(route, APIRoute) and route.path.startswith("/api/v1/staff") and "/staff/auth/" not in route.path:
+            guards = _guards(route.dependant)
+            for method in route.methods:
+                actual[(method, route.path)] = guards[0].staff_capability if guards else "MISSING"
+    assert actual == ROUTE_CAPABILITIES
+
+
 @pytest.fixture
 def guarded_client(client):
     """Adds one throwaway route per capability, guarded exactly as real staff routes are."""

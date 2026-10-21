@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     verification_code_max_attempts: int = 5
     password_min_length: int = 8
 
+    # Uploads live outside the web root and are served only through the API.
+    upload_dir: str = "uploads"
+    max_image_bytes: int = 5 * 1024 * 1024
+    max_product_images: int = 8
+
     seed_staff_password: str = "pahyems-dev-2026"
 
 

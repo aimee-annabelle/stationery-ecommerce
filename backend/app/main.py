@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1 import router as api_router
+from app.api.v1.catalog import media_router
 from app.core.config import Settings, get_settings
 from app.services.errors import ServiceError
 
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.message, "code": exc.code})
 
     app.include_router(api_router)
+    app.include_router(media_router)
     return app
 
 

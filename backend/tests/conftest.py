@@ -111,3 +111,27 @@ def staff_token(client: TestClient, member: Staff) -> str:
 
 def bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def seeded(db: Session) -> Session:
+    """The canvas sample data from app.seed: categories, 11 products and settings. Staff come from `team`."""
+    from app.seed import seed
+
+    seed(db, with_staff=False)
+    return db
+
+
+@pytest.fixture
+def storage(tmp_path, client):
+    from app.core.storage import LocalFileStorage, get_storage
+
+    local = LocalFileStorage(str(tmp_path))
+    app.dependency_overrides[get_storage] = lambda: local
+    return local
+
+
+@pytest.fixture
+def headers(client: TestClient, team: dict[str, Staff]) -> dict[str, dict[str, str]]:
+    """Authorization headers for a signed-in owner, manager and worker."""
+    return {role: bearer(staff_token(client, member)) for role, member in team.items()}

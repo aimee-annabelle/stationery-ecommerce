@@ -18,11 +18,11 @@ from app.models import Category, Product, Setting, Staff
 from app.services import stock
 
 CATEGORIES = [
-    # slug, name, sort_order
-    ("school-supplies", "School supplies", 1),
-    ("office-supplies", "Office supplies", 2),
-    ("electronics", "Electronics", 3),
-    ("phone-accessories", "Phone accessories", 4),
+    # slug, name, sort_order, tint (HANDOFF.md design tokens)
+    ("school-supplies", "School supplies", 1, "butter"),
+    ("office-supplies", "Office supplies", 2, "lilac"),
+    ("electronics", "Electronics", 3, "blush"),
+    ("phone-accessories", "Phone accessories", 4, "sage"),
 ]
 
 # From design/AdminProducts.dc.html (prices, cost, stock, low-stock alert) and
@@ -112,13 +112,13 @@ def slugify(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-def seed(db: Session) -> dict[str, int]:
+def seed(db: Session, *, with_staff: bool = True) -> dict[str, int]:
     added = {"categories": 0, "products": 0, "staff": 0, "settings": 0}
 
     categories: dict[str, Category] = {c.slug: c for c in db.scalars(select(Category))}
-    for slug, name, order in CATEGORIES:
+    for slug, name, order, tint in CATEGORIES:
         if slug not in categories:
-            categories[slug] = Category(slug=slug, name=name, sort_order=order)
+            categories[slug] = Category(slug=slug, name=name, sort_order=order, tint=tint)
             db.add(categories[slug])
             added["categories"] += 1
     db.flush()
@@ -146,7 +146,7 @@ def seed(db: Session) -> dict[str, int]:
 
     existing_emails = set(db.scalars(select(Staff.email)))
     password_hash = hash_password(get_settings().seed_staff_password)
-    for name, phone, email, role in STAFF:
+    for name, phone, email, role in STAFF if with_staff else []:
         if email not in existing_emails:
             db.add(Staff(name=name, phone=phone, email=email, role=role, password_hash=password_hash))
             added["staff"] += 1
